@@ -32,6 +32,46 @@ export async function getWeek(id: string): Promise<{ week: Week; items: WeekItem
   return res.json();
 }
 
+export interface WeekFullItem {
+  food_id: string;
+  food_name: string;
+  category: string;
+  kcal_per_100g: number;
+  protein_g_per_100g: number;
+  carb_g_per_100g: number;
+  fat_g_per_100g: number;
+  fc: number;
+  cooked_grams_per_marmita: number;
+  num_marmitas: number;
+  person: number;
+  already_in_my_db: boolean;
+}
+
+export interface WeekFull {
+  week: {
+    id: string;
+    title: string;
+    notes: string | null;
+    num_marmitas: number;
+    num_marmitas_p2: number;
+    is_shared: boolean;
+    person2_name: string | null;
+    user_id: string;
+  };
+  owner_name: string;
+  items: WeekFullItem[];
+}
+
+// Busca a semana com os dados do alimento resolvidos no servidor (funciona
+// mesmo quando os alimentos são da conta de quem criou — semana do casal).
+export async function getWeekFull(id: string): Promise<WeekFull> {
+  const res = await fetch(`/api/weeks/${id}/full`);
+  if (!res.ok) {
+    throw new Error(`Erro ao carregar semana: ${res.statusText}`);
+  }
+  return res.json();
+}
+
 export async function createWeek(data: WeekData): Promise<Week> {
   const res = await fetch("/api/weeks", {
     method: "POST",

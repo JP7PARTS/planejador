@@ -7,8 +7,8 @@ import {
   listWeeks,
   toggleFavorite,
   deleteWeek,
-  getWeek,
   duplicateWeek,
+  getWeekFull,
 } from "@/lib/api/weeks";
 import { calculateWeekSummary } from "@/lib/calc";
 import { getHouseholdSummary } from "@/lib/api/household";
@@ -37,7 +37,8 @@ export default function SemanasPage() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      setMeuId(user?.id ?? null);
+      const uid = user?.id ?? null;
+      setMeuId(uid);
 
       // Se vinculado, monta o mapa id→nome dos membros do casal (para os selos).
       try {
@@ -64,6 +65,43 @@ export default function SemanasPage() {
       // Calcula resumos de cada semana
       const resumosMap: Record<string, { totalKcal: number; totalProtein: number }> = {};
       for (const week of weeks) {
+        if (uid && week.user_id !== uid) {
+          // Semana da parceira: os alimentos são da conta dela, então resolve
+          // no servidor (RPC) em vez de usar o meu banco de alimentos.
+          try {
+            const full = await getWeekFull(week.id);
+            const foodsMap: Record<string, Food> = {};
+            full.items.forEach((it) => {
+              foodsMap[it.food_id] = {
+                id: it.food_id,
+                name: it.food_name,
+                fc: it.fc,
+                kcal_per_100g: it.kcal_per_100g,
+                protein_g_per_100g: it.protein_g_per_100g,
+                carb_g_per_100g: it.carb_g_per_100g,
+                fat_g_per_100g: it.fat_g_per_100g,
+              } as Food;
+            });
+            const weekItems = full.items.map((it) => ({
+              foodId: it.food_id,
+              cookedGramsPerMarmita: it.cooked_grams_per_marmita,
+              numMarmitas: it.num_marmitas,
+            }));
+            const summary = calculateWeekSummary(
+              weekItems,
+              foodsMap,
+              week.num_marmitas
+            );
+            resumosMap[week.id] = {
+              totalKcal: summary.totalKcal,
+              totalProtein: summary.totalProtein,
+            };
+          } catch {
+            // ignora resumo desta semana se falhar
+          }
+          continue;
+        }
+
         const { data: items } = await supabase
           .from("week_items")
           .select("*")
@@ -261,7 +299,11 @@ function SemanaCard({
     <div className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex-1">
         <Link
-          href={`/inicio/semana?semanaId=${week.id}`}
+          href={
+            daParceira
+              ? `/inicio/semana/ver/${week.id}`
+              : `/inicio/semana?semanaId=${week.id}`
+          }
           className="font-medium text-emerald-600 hover:underline dark:text-emerald-400"
         >
           {week.title}
