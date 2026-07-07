@@ -19,11 +19,11 @@ export async function getHouseholdSummary(): Promise<HouseholdSummary> {
   return res.json();
 }
 
-export async function linkHousehold(targetHouseholdId: string): Promise<void> {
+export async function linkHousehold(partnerCode: string): Promise<void> {
   const res = await fetch("/api/household/link", {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ target_household_id: targetHouseholdId }),
+    body: JSON.stringify({ partner_code: partnerCode }),
   });
   if (!res.ok) {
     const error = await res.json();

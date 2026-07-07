@@ -13,80 +13,27 @@ export async function PUT(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { target_household_id } = body;
+    const { partner_code } = body;
 
-    if (!target_household_id) {
+    if (!partner_code) {
       return NextResponse.json(
-        { error: "ID da família é obrigatório" },
+        { error: "O código do parceiro é obrigatório" },
         { status: 400 }
       );
     }
 
-    // Busca o perfil do usuário atual
-    const { data: currentProfile, error: currentError } = await supabase
-      .from("profiles")
-      .select("household_id, share_consent")
-      .eq("id", user.id)
-      .single();
-
-    if (currentError || !currentProfile) {
-      return NextResponse.json(
-        { error: "Perfil não encontrado" },
-        { status: 404 }
-      );
-    }
-
-    // Busca o perfil do alvo
-    const { data: targetProfile, error: targetError } = await supabase
-      .from("profiles")
-      .select("id, household_id, share_consent")
-      .eq("household_id", target_household_id)
-      .maybeSingle();
-
-    if (targetError) {
-      return NextResponse.json(
-        { error: targetError.message || "Erro ao buscar família" },
-        { status: 400 }
-      );
-    }
-
-    if (!targetProfile) {
-      return NextResponse.json(
-        { error: "Família não encontrada" },
-        { status: 404 }
-      );
-    }
-
-    // Verifica se o alvo consentiu compartilhar
-    if (!targetProfile.share_consent) {
-      return NextResponse.json(
-        { error: "Seu parceiro ainda não habilitou o compartilhamento" },
-        { status: 400 }
-      );
-    }
-
-    // Atualiza o household_id do usuário atual para o do alvo
-    const { error: updateError } = await supabase
-      .from("profiles")
-      .update({
-        household_id: targetProfile.household_id,
-        share_consent: true,
-      })
-      .eq("id", user.id);
-
-    if (updateError) {
-      return NextResponse.json(
-        { error: updateError.message || "Erro ao atualizar perfil" },
-        { status: 400 }
-      );
-    }
-
-    // Registra o link de compartilhamento na auditoria
-    await supabase.from("household_links").insert({
-      user_id_initiator: user.id,
-      user_id_target: targetProfile.id,
-      linked_household_id: targetProfile.household_id,
+    // A função no banco (security definer) valida o parceiro, marca o
+    // próprio share_consent e converge os dois para o mesmo household_id.
+    const { error: rpcError } = await supabase.rpc("link_household", {
+      p_partner_code: partner_code,
     });
+
+    if (rpcError) {
+      return NextResponse.json(
+        { error: rpcError.message || "Erro ao ativar compartilhamento" },
+        { status: 400 }
+      );
+    }
 
     return NextResponse.json({ success: true });
   } catch (err) {

@@ -125,7 +125,8 @@ export function calculateWeekSummary(
 
   const totalRawPerFood: Record<string, number> = {};
   results.forEach((r) => {
-    totalRawPerFood[r.food.name] = r.rawTotal;
+    totalRawPerFood[r.food.name] =
+      (totalRawPerFood[r.food.name] ?? 0) + r.rawTotal;
   });
 
   const totalKcal = results.reduce((sum, r) => sum + r.kcalTotal, 0);

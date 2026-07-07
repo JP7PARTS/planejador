@@ -48,7 +48,7 @@ export default function ConfiguracoesPage() {
 
   async function handleAtivareCompartilhamento() {
     if (!targetHouseholdId.trim()) {
-      setErro("Digite o ID da família");
+      setErro("Cole o código do seu parceiro/parceira");
       return;
     }
 
@@ -137,16 +137,16 @@ export default function ConfiguracoesPage() {
               </div>
               <div>
                 <p className="text-slate-500 dark:text-slate-400">
-                  ID da Família
+                  Seu Código (compartilhe com seu parceiro)
                 </p>
                 <div className="mt-1 flex items-center gap-2">
                   <code className="flex-1 rounded bg-slate-100 px-2 py-1 font-mono text-xs dark:bg-slate-800">
-                    {profile.household_id}
+                    {profile.id}
                   </code>
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText(profile.household_id);
-                      setSucesso("ID copiado!");
+                      navigator.clipboard.writeText(profile.id);
+                      setSucesso("Código copiado!");
                       setTimeout(() => setSucesso(null), 3000);
                     }}
                     className="rounded bg-slate-600 px-2 py-1 text-xs font-medium text-white transition hover:bg-slate-700"
@@ -186,18 +186,18 @@ export default function ConfiguracoesPage() {
               <div className="mt-4 space-y-3">
                 <div>
                   <label className="block text-sm font-medium">
-                    ID da Família do Seu Parceiro *
+                    Código do seu parceiro/parceira *
                   </label>
                   <input
                     type="text"
                     value={targetHouseholdId}
                     onChange={(e) => setTargetHouseholdId(e.target.value)}
-                    placeholder="Cole o ID que seu parceiro compartilhou"
+                    placeholder="Cole o código que seu parceiro compartilhou"
                     className="mt-1 w-full rounded border border-slate-300 bg-white px-3 py-2 font-mono text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-800"
                   />
                   <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                    Peça para seu parceiro abrir Configurações e copiar o "ID da
-                    Família"
+                    Peça para seu parceiro abrir Configurações e copiar o "Seu
+                    Código"
                   </p>
                 </div>
 
@@ -216,11 +216,12 @@ export default function ConfiguracoesPage() {
           <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800 dark:border-blue-900 dark:bg-blue-950/20 dark:text-blue-200">
             <p className="font-medium">ℹ️ Como funciona:</p>
             <ol className="mt-2 space-y-1 list-inside list-decimal text-xs">
-              <li>Compartilhe seu "ID da Família" com seu parceiro</li>
-              <li>Seu parceiro habilita compartilhamento e cola seu ID</li>
+              <li>Copie o "Seu Código" e envie para seu parceiro</li>
+              <li>Cole o código do seu parceiro e clique "Ativar"</li>
+              <li>Seu parceiro faz o mesmo (cola o seu código e ativa)</li>
               <li>
-                Ambos podem ver "Totais do Casal" na tela inicial com dados
-                combinados
+                Quando os dois ativarem, ambos veem "Totais do Casal" na tela
+                inicial com os dados combinados
               </li>
               <li>Qualquer um pode desativar a qualquer momento</li>
             </ol>
