@@ -99,7 +99,7 @@ export default function FoodForm({ food, onClose, onSuccess }: Props) {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium">FC (cocção)</label>
+              <label className="block text-xs font-medium">Fator de cocção (cozido↔cru)</label>
               <input
                 type="number"
                 value={fc}

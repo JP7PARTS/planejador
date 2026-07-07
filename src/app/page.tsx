@@ -5,8 +5,8 @@ const etapas = [
   { n: 2, titulo: "Login", desc: "Contas separadas com Supabase Auth.", pronto: true },
   { n: 3, titulo: "Banco + TACO", desc: "Alimentos pré-populados da Tabela TACO.", pronto: true },
   { n: 4, titulo: "Alimentos", desc: "Criar, editar e excluir seus alimentos.", pronto: true },
-  { n: 5, titulo: "Métodos de preparo", desc: "Fator de cocção (FCy) por alimento.", pronto: false },
-  { n: 6, titulo: "Montar a semana", desc: "Motor de cálculo de cru, calorias e macros.", pronto: false },
+  { n: 5, titulo: "Métodos de preparo", desc: "Fator de cocção (FC) por alimento.", pronto: true },
+  { n: 6, titulo: "Montar a semana", desc: "Motor de cálculo de cru, calorias e macros.", pronto: true },
   { n: 7, titulo: "Salvar semanas", desc: "Salvar, abrir, duplicar e favoritar cardápios.", pronto: false },
   { n: 8, titulo: "Consolidar o casal", desc: "Somar os totais (só com consentimento).", pronto: false },
   { n: 9, titulo: "Ajuste mobile", desc: "Deixar tudo redondo no celular.", pronto: false },
@@ -70,7 +70,7 @@ export default function Home() {
       </section>
 
       <footer className="mt-auto pt-10 text-center text-xs text-slate-400">
-        Etapa 1 concluída — página no ar. As próximas etapas chegam em breve.
+        Etapas 1-6 concluídas — você pode começar a montar suas semanas! 🚀
       </footer>
     </main>
   );
