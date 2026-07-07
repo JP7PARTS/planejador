@@ -4,7 +4,7 @@ const etapas = [
   { n: 1, titulo: "Esqueleto no ar", desc: "Página inicial publicada na Vercel.", pronto: true },
   { n: 2, titulo: "Login", desc: "Contas separadas com Supabase Auth.", pronto: true },
   { n: 3, titulo: "Banco + TACO", desc: "Alimentos pré-populados da Tabela TACO.", pronto: true },
-  { n: 4, titulo: "Alimentos", desc: "Criar, editar e excluir seus alimentos.", pronto: false },
+  { n: 4, titulo: "Alimentos", desc: "Criar, editar e excluir seus alimentos.", pronto: true },
   { n: 5, titulo: "Métodos de preparo", desc: "Fator de cocção (FCy) por alimento.", pronto: false },
   { n: 6, titulo: "Montar a semana", desc: "Motor de cálculo de cru, calorias e macros.", pronto: false },
   { n: 7, titulo: "Salvar semanas", desc: "Salvar, abrir, duplicar e favoritar cardápios.", pronto: false },
