@@ -9,7 +9,10 @@ const etapas = [
   { n: 6, titulo: "Montar a semana", desc: "Motor de cálculo de cru, calorias e macros.", pronto: true },
   { n: 7, titulo: "Salvar semanas", desc: "Salvar, abrir, duplicar e favoritar cardápios.", pronto: true },
   { n: 8, titulo: "Consolidar o casal", desc: "Somar os totais (só com consentimento).", pronto: true },
-  { n: 9, titulo: "Ajuste mobile", desc: "Deixar tudo redondo no celular.", pronto: false },
+  { n: 9, titulo: "Semana conjunta", desc: "Dividir uma semana entre duas pessoas.", pronto: true },
+  { n: 10, titulo: "Semana do casal", desc: "Aparecer nas duas contas quando vinculadas.", pronto: true },
+  { n: 11, titulo: "Ver semana do casal", desc: "Visualizar e adicionar alimentos faltantes.", pronto: true },
+  { n: 12, titulo: "Ajuste mobile", desc: "Deixar tudo redondo no celular.", pronto: false },
 ];
 
 export default function Home() {
@@ -70,7 +73,7 @@ export default function Home() {
       </section>
 
       <footer className="mt-auto pt-10 text-center text-xs text-slate-400">
-        Etapas 1-8 concluídas — você e seu casal podem compartilhar seus dados! 🚀
+        Etapas 1-11 concluídas — você pode visualizar as semanas do seu casal! 🚀
       </footer>
     </main>
   );
