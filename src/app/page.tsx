@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const etapas = [
   { n: 1, titulo: "Esqueleto no ar", desc: "Página inicial publicada na Vercel.", pronto: true },
   { n: 2, titulo: "Login", desc: "Contas separadas com Supabase Auth.", pronto: false },
@@ -25,6 +27,12 @@ export default function Home() {
           descubra quanto comprar de alimento <strong>cru</strong> a partir do
           peso <strong>pronto</strong> que você quer comer.
         </p>
+        <Link
+          href="/login"
+          className="mt-5 inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-5 py-2.5 text-base font-semibold text-white transition hover:bg-emerald-700"
+        >
+          Entrar / Criar conta →
+        </Link>
       </header>
 
       <section aria-labelledby="etapas-titulo">
