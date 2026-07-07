@@ -125,12 +125,20 @@ export default function SemanasPage() {
 
   return (
     <main className="mx-auto flex max-w-4xl flex-col gap-6 px-5 py-6">
-      <header>
-        <h1 className="text-2xl font-bold">Minhas Semanas</h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {semanas.length} semana{semanas.length !== 1 ? "s" : ""} salva
-          {semanas.length !== 1 ? "s" : ""}
-        </p>
+      <header className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">Minhas Semanas</h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            {semanas.length} semana{semanas.length !== 1 ? "s" : ""} salva
+            {semanas.length !== 1 ? "s" : ""}
+          </p>
+        </div>
+        <Link
+          href="/inicio"
+          className="rounded bg-slate-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-700"
+        >
+          ← Voltar
+        </Link>
       </header>
 
       {erro && (
