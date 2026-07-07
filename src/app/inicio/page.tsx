@@ -26,6 +26,15 @@ export default async function InicioPage() {
     user.email?.split("@")[0] ||
     "você";
 
+  // Busca o perfil para ver se o compartilhamento está ativado
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("share_consent")
+    .eq("id", user.id)
+    .single();
+
+  const hasSharing = profile?.share_consent ?? false;
+
   return (
     <main className="mx-auto flex min-h-dvh max-w-2xl flex-col px-5 py-10 sm:py-16">
       <header className="mb-8 flex items-start justify-between gap-4">
@@ -77,15 +86,58 @@ export default async function InicioPage() {
           </Link>
         </div>
 
+        <div className="rounded-xl border border-slate-200 bg-white/60 p-5 dark:border-slate-800 dark:bg-slate-900/40">
+          <h2 className="font-semibold">Semanas Salvas</h2>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+            Veja todas as semanas que você montou, abra para editar, duplique uma
+            como base para a próxima, ou marque suas favoritas.
+          </p>
+          <Link
+            href="/inicio/semanas"
+            className="mt-3 inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
+          >
+            Ver Semanas →
+          </Link>
+        </div>
+
+        <div className="rounded-xl border border-slate-200 bg-white/60 p-5 dark:border-slate-800 dark:bg-slate-900/40">
+          <h2 className="font-semibold">⚙️ Configurações</h2>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+            Gerencie seu perfil, veja seu ID da Família, e ative compartilhamento
+            com seu casal para ver os totais combinados.
+          </p>
+          <Link
+            href="/inicio/configuracoes"
+            className="mt-3 inline-flex items-center gap-2 rounded-lg bg-slate-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700"
+          >
+            Configurações →
+          </Link>
+        </div>
+
+        {hasSharing && (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-5 dark:border-emerald-900 dark:bg-emerald-950/20">
+            <h2 className="font-semibold text-emerald-900 dark:text-emerald-100">
+              📊 Totais do Casal
+            </h2>
+            <p className="mt-1 text-sm text-emerald-800 dark:text-emerald-200">
+              Veja a lista de compras combinada e a nutrição agregada de você e
+              seu casal. Todos os dados estão consolidados em um único lugar.
+            </p>
+            <Link
+              href="/inicio/consolidacao"
+              className="mt-3 inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
+            >
+              Ver Totais →
+            </Link>
+          </div>
+        )}
+
         <div className="rounded-xl border border-dashed border-slate-300 p-5 text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
           <p className="font-medium text-slate-600 dark:text-slate-300">
             Próximas etapas
           </p>
           <ul className="mt-2 space-y-1 text-sm">
-            <li>• Métodos de preparo (FCy por alimento)</li>
-            <li>• Salvar/abrir/duplicar/favoritar semanas</li>
-            <li>• Consolidação do casal (se ambos concordarem)</li>
-            <li>• Ajuste mobile</li>
+            <li>• Ajuste mobile (responsive)</li>
           </ul>
         </div>
       </section>

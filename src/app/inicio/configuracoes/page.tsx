@@ -1,0 +1,232 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { linkHousehold, unlinkHousehold } from "@/lib/api/household";
+import Link from "next/link";
+
+interface Profile {
+  id: string;
+  display_name: string;
+  household_id: string;
+  share_consent: boolean;
+}
+
+export default function ConfiguracoesPage() {
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState<string | null>(null);
+  const [sucesso, setSucesso] = useState<string | null>(null);
+
+  const [targetHouseholdId, setTargetHouseholdId] = useState("");
+  const [ativando, setAtivando] = useState(false);
+  const [desativando, setDesativando] = useState(false);
+
+  const carregarPerfil = useCallback(async () => {
+    try {
+      setErro(null);
+      setCarregando(true);
+
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, display_name, household_id, share_consent")
+        .single();
+
+      if (error) throw error;
+      setProfile(data);
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : "Erro ao carregar");
+    } finally {
+      setCarregando(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    carregarPerfil();
+  }, [carregarPerfil]);
+
+  async function handleAtivareCompartilhamento() {
+    if (!targetHouseholdId.trim()) {
+      setErro("Digite o ID da família");
+      return;
+    }
+
+    setAtivando(true);
+    setErro(null);
+    setSucesso(null);
+
+    try {
+      await linkHousehold(targetHouseholdId.trim());
+      setSucesso("Compartilhamento ativado com sucesso!");
+      setTargetHouseholdId("");
+      await carregarPerfil();
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : "Erro ao ativar");
+    } finally {
+      setAtivando(false);
+    }
+  }
+
+  async function handleDesativarCompartilhamento() {
+    if (
+      !window.confirm(
+        "Tem certeza que quer desativar o compartilhamento com seu casal?"
+      )
+    ) {
+      return;
+    }
+
+    setDesativando(true);
+    setErro(null);
+    setSucesso(null);
+
+    try {
+      await unlinkHousehold();
+      setSucesso("Compartilhamento desativado!");
+      await carregarPerfil();
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : "Erro ao desativar");
+    } finally {
+      setDesativando(false);
+    }
+  }
+
+  return (
+    <main className="mx-auto flex max-w-2xl flex-col gap-6 px-5 py-6">
+      <header className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">Configurações</h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            Gerencie seu perfil e compartilhamento com o casal
+          </p>
+        </div>
+        <Link
+          href="/inicio"
+          className="rounded bg-slate-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-700"
+        >
+          ← Voltar
+        </Link>
+      </header>
+
+      {erro && (
+        <div className="rounded-lg bg-red-500/10 p-4 text-sm text-red-600 dark:text-red-400">
+          {erro}
+        </div>
+      )}
+
+      {sucesso && (
+        <div className="rounded-lg bg-emerald-500/10 p-4 text-sm text-emerald-600 dark:text-emerald-400">
+          {sucesso}
+        </div>
+      )}
+
+      {carregando ? (
+        <p className="text-center text-slate-500 dark:text-slate-400">
+          Carregando…
+        </p>
+      ) : profile ? (
+        <>
+          {/* Perfil */}
+          <div className="rounded-lg border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+            <h2 className="font-semibold">Seu Perfil</h2>
+            <div className="mt-3 space-y-3 text-sm">
+              <div>
+                <p className="text-slate-500 dark:text-slate-400">Nome</p>
+                <p className="font-medium">{profile.display_name || "Sem nome"}</p>
+              </div>
+              <div>
+                <p className="text-slate-500 dark:text-slate-400">
+                  ID da Família
+                </p>
+                <div className="mt-1 flex items-center gap-2">
+                  <code className="flex-1 rounded bg-slate-100 px-2 py-1 font-mono text-xs dark:bg-slate-800">
+                    {profile.household_id}
+                  </code>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(profile.household_id);
+                      setSucesso("ID copiado!");
+                      setTimeout(() => setSucesso(null), 3000);
+                    }}
+                    className="rounded bg-slate-600 px-2 py-1 text-xs font-medium text-white transition hover:bg-slate-700"
+                  >
+                    Copiar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Status de Compartilhamento */}
+          {profile.share_consent ? (
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-5 dark:border-emerald-900 dark:bg-emerald-950/20">
+              <h2 className="font-semibold text-emerald-900 dark:text-emerald-100">
+                ✅ Compartilhamento Ativo
+              </h2>
+              <p className="mt-2 text-sm text-emerald-800 dark:text-emerald-200">
+                Você está compartilhando seus dados de marmitas com seu casal.
+              </p>
+              <button
+                onClick={handleDesativarCompartilhamento}
+                disabled={desativando}
+                className="mt-3 rounded bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:opacity-60"
+              >
+                {desativando ? "Desativando…" : "Desativar Compartilhamento"}
+              </button>
+            </div>
+          ) : (
+            <div className="rounded-lg border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+              <h2 className="font-semibold">Ativar Compartilhamento com Casal</h2>
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                Compartilhe seus dados de marmitas com seu parceiro/parceira para
+                ver os totais combinados.
+              </p>
+
+              <div className="mt-4 space-y-3">
+                <div>
+                  <label className="block text-sm font-medium">
+                    ID da Família do Seu Parceiro *
+                  </label>
+                  <input
+                    type="text"
+                    value={targetHouseholdId}
+                    onChange={(e) => setTargetHouseholdId(e.target.value)}
+                    placeholder="Cole o ID que seu parceiro compartilhou"
+                    className="mt-1 w-full rounded border border-slate-300 bg-white px-3 py-2 font-mono text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-800"
+                  />
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    Peça para seu parceiro abrir Configurações e copiar o "ID da
+                    Família"
+                  </p>
+                </div>
+
+                <button
+                  onClick={handleAtivareCompartilhamento}
+                  disabled={ativando}
+                  className="rounded bg-emerald-600 px-4 py-2 font-medium text-white transition hover:bg-emerald-700 disabled:opacity-60"
+                >
+                  {ativando ? "Ativando…" : "Ativar Compartilhamento"}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Info */}
+          <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800 dark:border-blue-900 dark:bg-blue-950/20 dark:text-blue-200">
+            <p className="font-medium">ℹ️ Como funciona:</p>
+            <ol className="mt-2 space-y-1 list-inside list-decimal text-xs">
+              <li>Compartilhe seu "ID da Família" com seu parceiro</li>
+              <li>Seu parceiro habilita compartilhamento e cola seu ID</li>
+              <li>
+                Ambos podem ver "Totais do Casal" na tela inicial com dados
+                combinados
+              </li>
+              <li>Qualquer um pode desativar a qualquer momento</li>
+            </ol>
+          </div>
+        </>
+      ) : null}
+    </main>
+  );
+}
