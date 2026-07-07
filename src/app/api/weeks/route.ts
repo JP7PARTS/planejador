@@ -12,10 +12,11 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
+    // Sem filtro por user_id: o RLS libera as minhas semanas + as semanas
+    // conjuntas do casal (parceira vinculada com consentimento).
     const { data, error } = await supabase
       .from("weeks")
       .select("*")
-      .eq("user_id", user.id)
       .order("is_favorite", { ascending: false })
       .order("created_at", { ascending: false });
 
@@ -55,6 +56,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Semana conjunta de quem está vinculado vira "semana do casal":
+    // grava o household_id (resolvido no servidor) para a parceira ver.
+    let householdId: string | null = null;
+    if (is_shared) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("household_id, share_consent")
+        .eq("id", user.id)
+        .single();
+      if (profile?.share_consent) {
+        householdId = profile.household_id;
+      }
+    }
+
     const { data, error } = await supabase
       .from("weeks")
       .insert({
@@ -65,6 +80,7 @@ export async function POST(req: NextRequest) {
         is_shared: is_shared ?? false,
         person2_name: person2_name?.trim() || null,
         num_marmitas_p2: num_marmitas_p2 ?? 0,
+        household_id: householdId,
       })
       .select()
       .single();

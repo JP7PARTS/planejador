@@ -23,6 +23,7 @@ export interface Week {
   is_shared: boolean;
   person2_name: string | null;
   num_marmitas_p2: number;
+  household_id: string | null;
   created_at: string;
   updated_at: string;
 }

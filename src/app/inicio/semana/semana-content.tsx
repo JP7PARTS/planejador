@@ -11,6 +11,7 @@ import {
   WeekSummary,
 } from "@/lib/calc";
 import { getWeek } from "@/lib/api/weeks";
+import { getHouseholdSummary } from "@/lib/api/household";
 import SemanaSalvaModal from "./semana-salva";
 import Link from "next/link";
 
@@ -34,6 +35,38 @@ export default function SemanaContent() {
   const [numMarmitasP2, setNumMarmitasP2] = useState(7);
   const [resumoEu, setResumoEu] = useState<WeekSummary | null>(null);
   const [resumoP2, setResumoP2] = useState<WeekSummary | null>(null);
+
+  // Vínculo do casal (Etapa 8): se vinculado, a 2ª pessoa é a parceira real.
+  const [linked, setLinked] = useState(false);
+  const [partnerName, setPartnerName] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const summary = await getHouseholdSummary();
+        const parceira = summary.users.find((u) => u.id !== user.id);
+        if (parceira) {
+          setLinked(true);
+          setPartnerName(parceira.name);
+        }
+      } catch {
+        // Não vinculado (ou compartilhamento inativo): mantém nome livre.
+      }
+    })();
+  }, []);
+
+  // Vinculado: a 2ª pessoa é sempre a parceira (nome automático).
+  useEffect(() => {
+    if (linked && partnerName) {
+      setPerson2Name(partnerName);
+    }
+  }, [linked, partnerName]);
 
   const carregarAlimentos = useCallback(async () => {
     try {
@@ -179,20 +212,30 @@ export default function SemanaContent() {
               </span>
             </label>
 
-            {isShared && (
-              <div className="mt-3">
-                <label className="block text-xs font-medium">
-                  Nome da outra pessoa
-                </label>
-                <input
-                  type="text"
-                  value={person2Name}
-                  onChange={(e) => setPerson2Name(e.target.value)}
-                  placeholder="Ex.: Namorada"
-                  className="mt-1 w-full max-w-xs rounded border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-800"
-                />
-              </div>
-            )}
+            {isShared &&
+              (linked && partnerName ? (
+                <div className="mt-3 rounded bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200">
+                  🔗 Compartilhando com <strong>{partnerName}</strong> — esta
+                  semana também aparecerá na conta dela.
+                </div>
+              ) : (
+                <div className="mt-3">
+                  <label className="block text-xs font-medium">
+                    Nome da outra pessoa
+                  </label>
+                  <input
+                    type="text"
+                    value={person2Name}
+                    onChange={(e) => setPerson2Name(e.target.value)}
+                    placeholder="Ex.: Namorada"
+                    className="mt-1 w-full max-w-xs rounded border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-800"
+                  />
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    Dica: para a semana aparecer na conta dela, vinculem as contas
+                    em Configurações.
+                  </p>
+                </div>
+              ))}
           </div>
 
           {/* Input: número de marmitas */}

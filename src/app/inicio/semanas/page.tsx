@@ -11,6 +11,7 @@ import {
   duplicateWeek,
 } from "@/lib/api/weeks";
 import { calculateWeekSummary } from "@/lib/calc";
+import { getHouseholdSummary } from "@/lib/api/household";
 import Link from "next/link";
 
 export default function SemanasPage() {
@@ -22,6 +23,8 @@ export default function SemanasPage() {
   const [resumos, setResumos] = useState<
     Record<string, { totalKcal: number; totalProtein: number }>
   >({});
+  const [meuId, setMeuId] = useState<string | null>(null);
+  const [nomesPorId, setNomesPorId] = useState<Record<string, string>>({});
 
   const carregarDados = useCallback(async () => {
     try {
@@ -29,6 +32,25 @@ export default function SemanasPage() {
       setCarregando(true);
 
       const supabase = createClient();
+
+      // Quem sou eu (para separar minhas semanas das da parceira).
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setMeuId(user?.id ?? null);
+
+      // Se vinculado, monta o mapa id→nome dos membros do casal (para os selos).
+      try {
+        const summary = await getHouseholdSummary();
+        const mapa: Record<string, string> = {};
+        summary.users.forEach((u) => {
+          mapa[u.id] = u.name;
+        });
+        setNomesPorId(mapa);
+      } catch {
+        setNomesPorId({});
+      }
+
       const { data: foods, error: foodsError } = await supabase
         .from("foods")
         .select("*");
@@ -174,6 +196,8 @@ export default function SemanasPage() {
                     key={week.id}
                     week={week}
                     resumo={resumos[week.id]}
+                    daParceira={!!meuId && week.user_id !== meuId}
+                    nomeDono={nomesPorId[week.user_id]}
                     onToggleFavorite={() => handleToggleFavorite(week)}
                     onDelete={() => handleDelete(week.id)}
                     onDuplicate={() => handleDuplicate(week)}
@@ -193,6 +217,8 @@ export default function SemanasPage() {
                     key={week.id}
                     week={week}
                     resumo={resumos[week.id]}
+                    daParceira={!!meuId && week.user_id !== meuId}
+                    nomeDono={nomesPorId[week.user_id]}
                     onToggleFavorite={() => handleToggleFavorite(week)}
                     onDelete={() => handleDelete(week.id)}
                     onDuplicate={() => handleDuplicate(week)}
@@ -211,6 +237,8 @@ export default function SemanasPage() {
 interface SemanaCardProps {
   week: Week;
   resumo?: { totalKcal: number; totalProtein: number };
+  daParceira: boolean;
+  nomeDono?: string;
   onToggleFavorite: () => void;
   onDelete: () => void;
   onDuplicate: () => void;
@@ -220,6 +248,8 @@ interface SemanaCardProps {
 function SemanaCard({
   week,
   resumo,
+  daParceira,
+  nomeDono,
   onToggleFavorite,
   onDelete,
   onDuplicate,
@@ -238,7 +268,11 @@ function SemanaCard({
         </Link>
         {week.is_shared && (
           <span className="ml-2 inline-flex items-center rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-900 dark:text-purple-200">
-            👥 conjunta
+            {daParceira
+              ? `👥 compartilhada por ${nomeDono || "parceira"}`
+              : week.person2_name
+                ? `👥 com ${week.person2_name}`
+                : "👥 conjunta"}
           </span>
         )}
         <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -260,13 +294,16 @@ function SemanaCard({
       </div>
 
       <div className="flex gap-1">
-        <button
-          onClick={onToggleFavorite}
-          className="rounded px-2 py-1 text-sm font-medium text-yellow-600 transition hover:bg-yellow-100 dark:text-yellow-400 dark:hover:bg-yellow-950"
-          title={week.is_favorite ? "Remover de favoritos" : "Adicionar aos favoritos"}
-        >
-          {week.is_favorite ? "⭐" : "☆"}
-        </button>
+        {/* Favoritar e apagar só para o dono; a parceira só visualiza/duplica. */}
+        {!daParceira && (
+          <button
+            onClick={onToggleFavorite}
+            className="rounded px-2 py-1 text-sm font-medium text-yellow-600 transition hover:bg-yellow-100 dark:text-yellow-400 dark:hover:bg-yellow-950"
+            title={week.is_favorite ? "Remover de favoritos" : "Adicionar aos favoritos"}
+          >
+            {week.is_favorite ? "⭐" : "☆"}
+          </button>
+        )}
         <button
           onClick={onDuplicate}
           className="rounded px-2 py-1 text-sm font-medium text-blue-600 transition hover:bg-blue-100 dark:text-blue-400 dark:hover:bg-blue-950"
@@ -274,14 +311,16 @@ function SemanaCard({
         >
           📋
         </button>
-        <button
-          onClick={onDelete}
-          disabled={deletando}
-          className="rounded px-2 py-1 text-sm font-medium text-red-600 transition hover:bg-red-100 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-950"
-          title="Deletar"
-        >
-          {deletando ? "…" : "🗑️"}
-        </button>
+        {!daParceira && (
+          <button
+            onClick={onDelete}
+            disabled={deletando}
+            className="rounded px-2 py-1 text-sm font-medium text-red-600 transition hover:bg-red-100 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-950"
+            title="Deletar"
+          >
+            {deletando ? "…" : "🗑️"}
+          </button>
+        )}
       </div>
     </div>
   );

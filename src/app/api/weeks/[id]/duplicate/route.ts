@@ -26,12 +26,12 @@ export async function POST(
       );
     }
 
-    // Busca a semana original
+    // Busca a semana original (RLS libera a própria ou a do casal, para que
+    // a parceira também possa duplicar uma semana compartilhada para a conta dela)
     const { data: originalWeek, error: getError } = await supabase
       .from("weeks")
       .select("*")
       .eq("id", id)
-      .eq("user_id", user.id)
       .single();
 
     if (getError || !originalWeek) {
@@ -39,6 +39,20 @@ export async function POST(
         { error: "Semana não encontrada" },
         { status: 404 }
       );
+    }
+
+    // Se a cópia é conjunta e quem duplica está vinculado, ela vira semana
+    // do casal na conta de quem duplicou (household_id resolvido no servidor).
+    let householdId: string | null = null;
+    if (originalWeek.is_shared) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("household_id, share_consent")
+        .eq("id", user.id)
+        .single();
+      if (profile?.share_consent) {
+        householdId = profile.household_id;
+      }
     }
 
     // Cria nova semana
@@ -53,6 +67,7 @@ export async function POST(
         is_shared: originalWeek.is_shared ?? false,
         person2_name: originalWeek.person2_name ?? null,
         num_marmitas_p2: originalWeek.num_marmitas_p2 ?? 0,
+        household_id: householdId,
       })
       .select()
       .single();

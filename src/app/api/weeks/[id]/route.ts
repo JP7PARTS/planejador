@@ -16,11 +16,11 @@ export async function GET(
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
+    // Sem filtro user_id: o RLS libera a própria semana OU a semana do casal.
     const { data: week, error: weekError } = await supabase
       .from("weeks")
       .select("*")
       .eq("id", id)
-      .eq("user_id", user.id)
       .single();
 
     if (weekError || !week) {
