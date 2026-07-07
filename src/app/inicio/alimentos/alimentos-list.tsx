@@ -83,24 +83,24 @@ export default function AlimentosList({ alimentos, onRefresh }: Props) {
                     <div className="flex-1">
                       <p className="font-medium">{alimento.name}</p>
                       <p className="text-xs text-slate-500 dark:text-slate-400">
-                        FC: {alimento.fc.toFixed(2)} • Cru
+                        FC: {alimento.fc.toFixed(2)} • Nutrição por 100g CRU
                       </p>
                     </div>
                     <div className="grid grid-cols-4 gap-2 text-xs">
                       <div>
-                        <p className="text-slate-500 dark:text-slate-400">kcal</p>
+                        <p className="text-slate-500 dark:text-slate-400">kcal/100g</p>
                         <p className="font-semibold">{alimento.kcal_per_100g.toFixed(0)}</p>
                       </div>
                       <div>
-                        <p className="text-slate-500 dark:text-slate-400">prot</p>
+                        <p className="text-slate-500 dark:text-slate-400">prot/100g</p>
                         <p className="font-semibold">{alimento.protein_g_per_100g.toFixed(1)}g</p>
                       </div>
                       <div>
-                        <p className="text-slate-500 dark:text-slate-400">carb</p>
+                        <p className="text-slate-500 dark:text-slate-400">carb/100g</p>
                         <p className="font-semibold">{alimento.carb_g_per_100g.toFixed(1)}g</p>
                       </div>
                       <div>
-                        <p className="text-slate-500 dark:text-slate-400">gord</p>
+                        <p className="text-slate-500 dark:text-slate-400">gord/100g</p>
                         <p className="font-semibold">{alimento.fat_g_per_100g.toFixed(1)}g</p>
                       </div>
                     </div>
