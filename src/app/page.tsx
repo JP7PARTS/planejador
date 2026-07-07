@@ -2,7 +2,7 @@ import Link from "next/link";
 
 const etapas = [
   { n: 1, titulo: "Esqueleto no ar", desc: "Página inicial publicada na Vercel.", pronto: true },
-  { n: 2, titulo: "Login", desc: "Contas separadas com Supabase Auth.", pronto: false },
+  { n: 2, titulo: "Login", desc: "Contas separadas com Supabase Auth.", pronto: true },
   { n: 3, titulo: "Banco + TACO", desc: "Alimentos pré-populados da Tabela TACO.", pronto: false },
   { n: 4, titulo: "Alimentos", desc: "Criar, editar e excluir seus alimentos.", pronto: false },
   { n: 5, titulo: "Métodos de preparo", desc: "Fator de cocção (FCy) por alimento.", pronto: false },
