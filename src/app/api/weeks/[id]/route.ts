@@ -66,7 +66,8 @@ export async function PUT(
     }
 
     const body = await req.json();
-    const { title, notes, num_marmitas } = body;
+    const { title, notes, num_marmitas, is_shared, person2_name, num_marmitas_p2 } =
+      body;
 
     const { data, error } = await supabase
       .from("weeks")
@@ -74,6 +75,11 @@ export async function PUT(
         title: title?.trim(),
         notes: notes?.trim() || null,
         num_marmitas,
+        ...(is_shared !== undefined ? { is_shared } : {}),
+        ...(person2_name !== undefined
+          ? { person2_name: person2_name?.trim() || null }
+          : {}),
+        ...(num_marmitas_p2 !== undefined ? { num_marmitas_p2 } : {}),
         updated_at: new Date().toISOString(),
       })
       .eq("id", id)

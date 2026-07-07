@@ -236,8 +236,16 @@ function SemanaCard({
         >
           {week.title}
         </Link>
+        {week.is_shared && (
+          <span className="ml-2 inline-flex items-center rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-900 dark:text-purple-200">
+            👥 conjunta
+          </span>
+        )}
         <p className="text-xs text-slate-500 dark:text-slate-400">
-          {dataFormatada} • {week.num_marmitas} marmitas
+          {dataFormatada} •{" "}
+          {week.is_shared
+            ? `${week.num_marmitas} + ${week.num_marmitas_p2} marmitas`
+            : `${week.num_marmitas} marmitas`}
         </p>
         {resumo && (
           <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">

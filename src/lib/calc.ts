@@ -4,6 +4,7 @@ export interface WeekItem {
   foodId: string;
   cookedGramsPerMarmita: number;
   numMarmitas: number;
+  person?: 1 | 2; // opcional; usado só para dividir semana conjunta (calc ignora)
 }
 
 export interface WeekItemResult extends WeekItem {

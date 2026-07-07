@@ -50,6 +50,9 @@ export async function POST(
         notes: originalWeek.notes,
         num_marmitas: originalWeek.num_marmitas,
         is_favorite: false,
+        is_shared: originalWeek.is_shared ?? false,
+        person2_name: originalWeek.person2_name ?? null,
+        num_marmitas_p2: originalWeek.num_marmitas_p2 ?? 0,
       })
       .select()
       .single();
@@ -81,6 +84,7 @@ export async function POST(
         food_id: item.food_id,
         cooked_grams_per_marmita: item.cooked_grams_per_marmita,
         num_marmitas: item.num_marmitas,
+        person: item.person ?? 1,
       }));
 
       const { error: insertError } = await supabase

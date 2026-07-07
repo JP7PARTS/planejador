@@ -32,7 +32,7 @@ export async function POST(
     }
 
     const body = await req.json();
-    const { food_id, cooked_grams_per_marmita, num_marmitas } = body;
+    const { food_id, cooked_grams_per_marmita, num_marmitas, person } = body;
 
     if (!food_id || !cooked_grams_per_marmita || !num_marmitas) {
       return NextResponse.json(
@@ -48,6 +48,7 @@ export async function POST(
         food_id,
         cooked_grams_per_marmita,
         num_marmitas,
+        person: person === 2 ? 2 : 1,
       })
       .select()
       .single();

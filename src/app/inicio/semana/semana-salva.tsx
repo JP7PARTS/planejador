@@ -8,6 +8,9 @@ interface Props {
   linhas: WeekItem[];
   numMarmitas: number;
   notas: string;
+  isShared: boolean;
+  person2Name: string;
+  numMarmitasP2: number;
   onClose: () => void;
   onSuccess: () => void;
 }
@@ -16,6 +19,9 @@ export default function SemanaSalvaModal({
   linhas,
   numMarmitas,
   notas,
+  isShared,
+  person2Name,
+  numMarmitasP2,
   onClose,
   onSuccess,
 }: Props) {
@@ -42,6 +48,9 @@ export default function SemanaSalvaModal({
         title: titulo.trim(),
         notes: notas || undefined,
         num_marmitas: numMarmitas,
+        is_shared: isShared,
+        person2_name: isShared ? person2Name.trim() || null : null,
+        num_marmitas_p2: isShared ? numMarmitasP2 : 0,
       });
 
       // Adiciona cada item à semana
@@ -51,6 +60,7 @@ export default function SemanaSalvaModal({
             food_id: linha.foodId,
             cooked_grams_per_marmita: linha.cookedGramsPerMarmita,
             num_marmitas: linha.numMarmitas,
+            person: isShared ? linha.person ?? 1 : 1,
           });
         }
       }

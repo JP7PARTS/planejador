@@ -6,6 +6,7 @@ import { Food, WeekItemDB } from "@/lib/types";
 import { createClient } from "@/lib/supabase/client";
 import {
   calculateWeekSummary,
+  calculateWeekItem,
   WeekItem,
   WeekSummary,
 } from "@/lib/calc";
@@ -27,6 +28,13 @@ export default function SemanaContent() {
   const [resumo, setResumo] = useState<WeekSummary | null>(null);
   const [mostrando, setMostrando] = useState<boolean>(false);
 
+  // Semana conjunta (dividida entre você e outra pessoa)
+  const [isShared, setIsShared] = useState(false);
+  const [person2Name, setPerson2Name] = useState("Namorada");
+  const [numMarmitasP2, setNumMarmitasP2] = useState(7);
+  const [resumoEu, setResumoEu] = useState<WeekSummary | null>(null);
+  const [resumoP2, setResumoP2] = useState<WeekSummary | null>(null);
+
   const carregarAlimentos = useCallback(async () => {
     try {
       setErro(null);
@@ -47,12 +55,16 @@ export default function SemanaContent() {
         const weekData = await getWeek(semanaId);
         setNumMarmitas(weekData.week.num_marmitas);
         setNotas(weekData.week.notes || "");
+        setIsShared(weekData.week.is_shared ?? false);
+        setPerson2Name(weekData.week.person2_name || "Namorada");
+        setNumMarmitasP2(weekData.week.num_marmitas_p2 || 7);
 
         const weekItems: WeekItem[] = (weekData.items || []).map(
           (item: WeekItemDB) => ({
             foodId: item.food_id,
             cookedGramsPerMarmita: item.cooked_grams_per_marmita,
             numMarmitas: item.num_marmitas,
+            person: item.person === 2 ? 2 : 1,
           })
         );
         setLinhas(weekItems);
@@ -71,6 +83,8 @@ export default function SemanaContent() {
   useEffect(() => {
     if (linhas.length === 0) {
       setResumo(null);
+      setResumoEu(null);
+      setResumoP2(null);
       return;
     }
 
@@ -79,15 +93,26 @@ export default function SemanaContent() {
       foodsMap[f.id] = f;
     });
 
-    const summary = calculateWeekSummary(linhas, foodsMap, numMarmitas);
-    setResumo(summary);
-  }, [linhas, numMarmitas, alimentos]);
+    const totalMarmitas = isShared ? numMarmitas + numMarmitasP2 : numMarmitas;
+    setResumo(calculateWeekSummary(linhas, foodsMap, totalMarmitas));
+
+    if (isShared) {
+      const linhasEu = linhas.filter((l) => (l.person ?? 1) === 1);
+      const linhasP2 = linhas.filter((l) => l.person === 2);
+      setResumoEu(calculateWeekSummary(linhasEu, foodsMap, numMarmitas));
+      setResumoP2(calculateWeekSummary(linhasP2, foodsMap, numMarmitasP2));
+    } else {
+      setResumoEu(null);
+      setResumoP2(null);
+    }
+  }, [linhas, numMarmitas, numMarmitasP2, isShared, alimentos]);
 
   function adicionarLinha() {
     const novaLinha: WeekItem = {
       foodId: "",
       cookedGramsPerMarmita: 100,
       numMarmitas: numMarmitas,
+      person: 1,
     };
     setLinhas([...linhas, novaLinha]);
   }
@@ -140,18 +165,85 @@ export default function SemanaContent() {
         </p>
       ) : (
         <>
+          {/* Toggle: semana conjunta */}
+          <div className="rounded-lg border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+            <label className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                checked={isShared}
+                onChange={(e) => setIsShared(e.target.checked)}
+                className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+              />
+              <span className="text-sm font-medium">
+                👥 Semana conjunta (dividir com outra pessoa)
+              </span>
+            </label>
+
+            {isShared && (
+              <div className="mt-3">
+                <label className="block text-xs font-medium">
+                  Nome da outra pessoa
+                </label>
+                <input
+                  type="text"
+                  value={person2Name}
+                  onChange={(e) => setPerson2Name(e.target.value)}
+                  placeholder="Ex.: Namorada"
+                  className="mt-1 w-full max-w-xs rounded border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-800"
+                />
+              </div>
+            )}
+          </div>
+
           {/* Input: número de marmitas */}
           <div className="rounded-lg border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-            <label className="block text-sm font-medium">
-              Quantas marmitas você fará?
-            </label>
-            <input
-              type="number"
-              value={numMarmitas}
-              onChange={(e) => setNumMarmitas(Math.max(1, Number(e.target.value)))}
-              min="1"
-              className="mt-2 w-full max-w-xs rounded border border-slate-300 bg-white px-3 py-2 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-800"
-            />
+            {isShared ? (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium">
+                    Suas marmitas (Eu)
+                  </label>
+                  <input
+                    type="number"
+                    value={numMarmitas}
+                    onChange={(e) =>
+                      setNumMarmitas(Math.max(1, Number(e.target.value)))
+                    }
+                    min="1"
+                    className="mt-2 w-full rounded border border-slate-300 bg-white px-3 py-2 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-800"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium">
+                    Marmitas de {person2Name || "outra pessoa"}
+                  </label>
+                  <input
+                    type="number"
+                    value={numMarmitasP2}
+                    onChange={(e) =>
+                      setNumMarmitasP2(Math.max(1, Number(e.target.value)))
+                    }
+                    min="1"
+                    className="mt-2 w-full rounded border border-slate-300 bg-white px-3 py-2 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-800"
+                  />
+                </div>
+              </div>
+            ) : (
+              <>
+                <label className="block text-sm font-medium">
+                  Quantas marmitas você fará?
+                </label>
+                <input
+                  type="number"
+                  value={numMarmitas}
+                  onChange={(e) =>
+                    setNumMarmitas(Math.max(1, Number(e.target.value)))
+                  }
+                  min="1"
+                  className="mt-2 w-full max-w-xs rounded border border-slate-300 bg-white px-3 py-2 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-800"
+                />
+              </>
+            )}
           </div>
 
           {/* Tabela de linhas de alimentos */}
@@ -174,18 +266,26 @@ export default function SemanaContent() {
               <div className="space-y-3">
                 {linhas.map((linha, idx) => {
                   const food = alimentos.find((f) => f.id === linha.foodId);
-                  const resultado = resumo?.items.find(
-                    (r) => r.foodId === linha.foodId &&
-                          r.cookedGramsPerMarmita === linha.cookedGramsPerMarmita &&
-                          r.numMarmitas === linha.numMarmitas
-                  );
+                  const resultado =
+                    food && linha.foodId
+                      ? calculateWeekItem(
+                          food,
+                          linha.cookedGramsPerMarmita,
+                          linha.numMarmitas
+                        )
+                      : null;
 
                   return (
                     <div
                       key={idx}
                       className="space-y-2 rounded border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800"
                     >
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-4 sm:items-end">
+                      <div
+                        className={
+                          "grid grid-cols-1 gap-3 sm:items-end " +
+                          (isShared ? "sm:grid-cols-5" : "sm:grid-cols-4")
+                        }
+                      >
                         <div>
                           <label className="block text-xs font-medium">
                             Alimento
@@ -242,6 +342,26 @@ export default function SemanaContent() {
                           />
                         </div>
 
+                        {isShared && (
+                          <div>
+                            <label className="block text-xs font-medium">
+                              Pessoa
+                            </label>
+                            <select
+                              value={linha.person ?? 1}
+                              onChange={(e) =>
+                                atualizarLinha(idx, {
+                                  person: Number(e.target.value) === 2 ? 2 : 1,
+                                })
+                              }
+                              className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-800"
+                            >
+                              <option value={1}>Eu</option>
+                              <option value={2}>{person2Name || "Outra"}</option>
+                            </select>
+                          </div>
+                        )}
+
                         <button
                           onClick={() => removerLinha(idx)}
                           className="rounded px-2 py-1.5 text-sm font-medium text-red-600 transition hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-950"
@@ -296,10 +416,10 @@ export default function SemanaContent() {
           {/* Resultados: lista de compras e nutrição */}
           {resumo && (
             <>
-              {/* Lista de Preparo/Compras */}
+              {/* Lista de Preparo/Compras (total) */}
               <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-5 dark:border-emerald-900 dark:bg-emerald-950/20">
                 <h2 className="mb-3 text-lg font-semibold text-emerald-900 dark:text-emerald-100">
-                  Lista de Preparo/Compras
+                  Lista de Preparo/Compras{isShared ? " — Total" : ""}
                 </h2>
                 <div className="space-y-2 text-sm">
                   {Object.entries(resumo.totalRawPerFood).map(
@@ -320,10 +440,21 @@ export default function SemanaContent() {
                 </div>
               </div>
 
-              {/* Nutrição da Semana */}
+              {/* Divisão por pessoa (só na semana conjunta) */}
+              {isShared && (
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <ResumoPessoa titulo="Você (Eu)" resumo={resumoEu} />
+                  <ResumoPessoa
+                    titulo={person2Name || "Outra pessoa"}
+                    resumo={resumoP2}
+                  />
+                </div>
+              )}
+
+              {/* Nutrição da Semana (total) */}
               <div className="rounded-lg border border-blue-200 bg-blue-50 p-5 dark:border-blue-900 dark:bg-blue-950/20">
                 <h2 className="mb-3 text-lg font-semibold text-blue-900 dark:text-blue-100">
-                  Nutrição da Semana
+                  Nutrição da Semana{isShared ? " — Total" : ""}
                 </h2>
                 <div className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
                   <div>
@@ -427,6 +558,9 @@ export default function SemanaContent() {
               linhas={linhas}
               numMarmitas={numMarmitas}
               notas={notas}
+              isShared={isShared}
+              person2Name={person2Name}
+              numMarmitasP2={numMarmitasP2}
               onClose={() => setMostrando(false)}
               onSuccess={() => {
                 setMostrando(false);
@@ -434,11 +568,78 @@ export default function SemanaContent() {
                 setLinhas([]);
                 setNotas("");
                 setNumMarmitas(7);
+                setIsShared(false);
+                setPerson2Name("Namorada");
+                setNumMarmitasP2(7);
               }}
             />
           )}
         </>
       )}
     </main>
+  );
+}
+
+function ResumoPessoa({
+  titulo,
+  resumo,
+}: {
+  titulo: string;
+  resumo: WeekSummary | null;
+}) {
+  const temItens = resumo && resumo.items.length > 0;
+
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+      <h3 className="mb-2 font-semibold">👤 {titulo}</h3>
+
+      {!temItens ? (
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Nenhum alimento para esta pessoa.
+        </p>
+      ) : (
+        <>
+          <div className="space-y-1 text-sm">
+            {Object.entries(resumo!.totalRawPerFood).map(([foodName, grams]) => (
+              <div key={foodName} className="flex items-center justify-between">
+                <span className="text-slate-700 dark:text-slate-300">
+                  {foodName}
+                </span>
+                <span className="font-semibold text-emerald-700 dark:text-emerald-300">
+                  {grams.toFixed(0)}g
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-3 grid grid-cols-2 gap-2 border-t border-slate-200 pt-2 text-xs dark:border-slate-700">
+            <div>
+              <p className="text-slate-500 dark:text-slate-400">kcal total</p>
+              <p className="font-semibold">{resumo!.totalKcal.toFixed(0)}</p>
+            </div>
+            <div>
+              <p className="text-slate-500 dark:text-slate-400">prot total</p>
+              <p className="font-semibold">{resumo!.totalProtein.toFixed(1)}g</p>
+            </div>
+            <div>
+              <p className="text-slate-500 dark:text-slate-400">
+                kcal/marmita
+              </p>
+              <p className="font-semibold">
+                {resumo!.avgKcalPerMarmita.toFixed(0)}
+              </p>
+            </div>
+            <div>
+              <p className="text-slate-500 dark:text-slate-400">
+                prot/marmita
+              </p>
+              <p className="font-semibold">
+                {resumo!.avgProteinPerMarmita.toFixed(1)}g
+              </p>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
   );
 }

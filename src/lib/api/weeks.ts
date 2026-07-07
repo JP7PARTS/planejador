@@ -4,12 +4,16 @@ export interface WeekData {
   title: string;
   notes?: string;
   num_marmitas: number;
+  is_shared?: boolean;
+  person2_name?: string | null;
+  num_marmitas_p2?: number;
 }
 
 export interface WeekItemData {
   food_id: string;
   cooked_grams_per_marmita: number;
   num_marmitas: number;
+  person?: number;
 }
 
 export async function listWeeks(): Promise<Week[]> {

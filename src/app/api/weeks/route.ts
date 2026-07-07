@@ -45,7 +45,8 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { title, notes, num_marmitas } = body;
+    const { title, notes, num_marmitas, is_shared, person2_name, num_marmitas_p2 } =
+      body;
 
     if (!title || !num_marmitas) {
       return NextResponse.json(
@@ -61,6 +62,9 @@ export async function POST(req: NextRequest) {
         title: title.trim(),
         notes: notes?.trim() || null,
         num_marmitas,
+        is_shared: is_shared ?? false,
+        person2_name: person2_name?.trim() || null,
+        num_marmitas_p2: num_marmitas_p2 ?? 0,
       })
       .select()
       .single();
