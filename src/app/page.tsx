@@ -1,4 +1,9 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { hasSupabaseEnv } from "@/lib/supabase/env";
+
+export const dynamic = "force-dynamic";
 
 const recursos = [
   {
@@ -23,7 +28,19 @@ const recursos = [
   },
 ];
 
-export default function Home() {
+export default async function Home() {
+  // Se já estiver logado, cai direto no dashboard.
+  if (hasSupabaseEnv()) {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (user) {
+      redirect("/inicio");
+    }
+  }
+
   return (
     <main className="mx-auto flex min-h-dvh max-w-5xl flex-col px-5 py-10 sm:py-16">
       {/* Hero */}
