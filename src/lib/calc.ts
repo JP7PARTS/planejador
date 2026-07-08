@@ -34,6 +34,32 @@ export interface WeekSummary {
   avgFatPerMarmita: number;
 }
 
+// Item da lista de compras: nome, gramas crus e categoria (para agrupar na UI).
+export interface ShoppingListItem {
+  name: string;
+  grams: number;
+  category: Food["category"];
+}
+
+// Monta a lista de compras a partir do resumo, agregando o cru total por
+// alimento (mesmo nome soma) e preservando a categoria para agrupar na tela.
+export function buildShoppingList(summary: WeekSummary): ShoppingListItem[] {
+  const map = new Map<string, ShoppingListItem>();
+  summary.items.forEach((r) => {
+    const existing = map.get(r.food.name);
+    if (existing) {
+      existing.grams += r.rawTotal;
+    } else {
+      map.set(r.food.name, {
+        name: r.food.name,
+        grams: r.rawTotal,
+        category: r.food.category,
+      });
+    }
+  });
+  return Array.from(map.values());
+}
+
 export function rawPerMarmita(cookedGrams: number, fc: number): number {
   return cookedGrams / fc;
 }

@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import {
   calculateWeekSummary,
   calculateWeekItem,
+  buildShoppingList,
   WeekItem,
   WeekSummary,
 } from "@/lib/calc";
@@ -14,6 +15,7 @@ import { getWeek } from "@/lib/api/weeks";
 import { getHouseholdSummary } from "@/lib/api/household";
 import SemanaSalvaModal from "./semana-salva";
 import ResumoPessoa from "./resumo-pessoa";
+import ListaCompras from "./lista-compras";
 import AlimentoSelect from "./alimento-select";
 import Link from "next/link";
 
@@ -465,28 +467,13 @@ export default function SemanaContent() {
           {resumo && (
             <>
               {/* Lista de Preparo/Compras (total) */}
-              <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-5 dark:border-emerald-900 dark:bg-emerald-950/20">
-                <h2 className="mb-3 text-lg font-semibold text-emerald-900 dark:text-emerald-100">
-                  Lista de Preparo/Compras{isShared ? " — Total" : ""}
-                </h2>
-                <div className="space-y-2 text-sm">
-                  {Object.entries(resumo.totalRawPerFood).map(
-                    ([foodName, grams]) => (
-                      <div
-                        key={foodName}
-                        className="flex items-center justify-between"
-                      >
-                        <span className="text-slate-700 dark:text-slate-300">
-                          {foodName}
-                        </span>
-                        <span className="font-semibold text-emerald-700 dark:text-emerald-300">
-                          {grams.toFixed(0)}g (CRU)
-                        </span>
-                      </div>
-                    )
-                  )}
-                </div>
-              </div>
+              <ListaCompras
+                titulo={
+                  (tituloSemana || "Minha semana") + (isShared ? " (Total)" : "")
+                }
+                itens={buildShoppingList(resumo)}
+                storageKey={semanaId ?? "nova"}
+              />
 
               {/* Divisão por pessoa (só na semana conjunta) */}
               {isShared && (
