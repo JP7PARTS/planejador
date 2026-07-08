@@ -69,45 +69,63 @@ export default function LoginPage() {
     }
   }
 
+  const inputClass =
+    "w-full rounded-xl border border-[#E2D7C4] bg-[#FCFAF5] px-3.5 py-3 text-[15px] text-slate-900 outline-none transition focus:border-emerald-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100";
+
   return (
-    <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center px-5 py-10">
-      <div className="mb-8 text-center">
-        <span className="text-4xl">🍱</span>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight">
-          Planejador de Marmitas
-        </h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {modo === "entrar" ? "Entre na sua conta" : "Crie sua conta"}
-        </p>
-      </div>
+    <main className="grid min-h-dvh place-items-center px-6 py-10">
+      <div className="w-full max-w-[400px]">
+        {/* Cabeçalho */}
+        <div className="mb-[26px] text-center">
+          <span className="mb-3.5 inline-grid size-[60px] place-items-center rounded-[18px] bg-emerald-600 text-3xl text-white">
+            🍱
+          </span>
+          <h1 className="text-[28px] font-bold tracking-tight">
+            Planejador de Marmitas
+          </h1>
+          <p className="mt-2 text-[15px] text-slate-600 dark:text-slate-400">
+            {modo === "entrar"
+              ? "Entre para planejar sua semana"
+              : "Crie sua conta e comece agora"}
+          </p>
+        </div>
 
-      {!configurado && (
-        <p className="mb-4 rounded-lg bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-400">
-          ⚙️ O login está sendo configurado. Em instantes esta tela funciona.
-        </p>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {modo === "cadastrar" && (
-          <div>
-            <label htmlFor="nome" className="mb-1 block text-sm font-medium">
-              Seu nome
-            </label>
-            <input
-              id="nome"
-              type="text"
-              value={nome}
-              onChange={(e) => setNome(e.target.value)}
-              required
-              autoComplete="name"
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-base outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-900"
-              placeholder="Ex.: Maria"
-            />
-          </div>
+        {!configurado && (
+          <p className="mb-4 rounded-xl bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-400">
+            ⚙️ O login está sendo configurado. Em instantes esta tela funciona.
+          </p>
         )}
 
-        <div>
-          <label htmlFor="email" className="mb-1 block text-sm font-medium">
+        {/* Card */}
+        <form
+          onSubmit={handleSubmit}
+          className="rounded-[22px] border border-[#EADFCD] bg-white p-6 shadow-[0_24px_50px_-34px_rgba(38,34,28,0.6)] dark:border-slate-800 dark:bg-slate-900"
+        >
+          {modo === "cadastrar" && (
+            <>
+              <label
+                htmlFor="nome"
+                className="mb-1.5 block text-[13px] font-semibold"
+              >
+                Seu nome
+              </label>
+              <input
+                id="nome"
+                type="text"
+                value={nome}
+                onChange={(e) => setNome(e.target.value)}
+                required
+                autoComplete="name"
+                className={`${inputClass} mb-3.5`}
+                placeholder="Ex.: Maria"
+              />
+            </>
+          )}
+
+          <label
+            htmlFor="email"
+            className="mb-1.5 block text-[13px] font-semibold"
+          >
             E-mail
           </label>
           <input
@@ -118,13 +136,14 @@ export default function LoginPage() {
             required
             autoComplete="email"
             inputMode="email"
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-base outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-900"
+            className={`${inputClass} mb-3.5`}
             placeholder="voce@email.com"
           />
-        </div>
 
-        <div>
-          <label htmlFor="senha" className="mb-1 block text-sm font-medium">
+          <label
+            htmlFor="senha"
+            className="mb-1.5 block text-[13px] font-semibold"
+          >
             Senha
           </label>
           <input
@@ -135,49 +154,49 @@ export default function LoginPage() {
             required
             minLength={6}
             autoComplete={modo === "entrar" ? "current-password" : "new-password"}
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-base outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-900"
-            placeholder="Mínimo de 6 caracteres"
+            className={`${inputClass} mb-5`}
+            placeholder="••••••••"
           />
-        </div>
 
-        {erro && (
-          <p className="rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-600 dark:text-red-400">
-            {erro}
-          </p>
-        )}
-        {aviso && (
-          <p className="rounded-lg bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-400">
-            {aviso}
-          </p>
-        )}
+          {erro && (
+            <p className="mb-4 rounded-xl bg-red-500/10 px-4 py-3 text-sm text-red-600 dark:text-red-400">
+              {erro}
+            </p>
+          )}
+          {aviso && (
+            <p className="mb-4 rounded-xl bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-400">
+              {aviso}
+            </p>
+          )}
 
-        <button
-          type="submit"
-          disabled={carregando}
-          className="w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-base font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60"
-        >
-          {carregando
-            ? "Aguarde…"
-            : modo === "entrar"
-              ? "Entrar"
-              : "Criar conta"}
-        </button>
-      </form>
+          <button
+            type="submit"
+            disabled={carregando}
+            className="w-full rounded-xl bg-emerald-600 px-4 py-3.5 text-base font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60"
+          >
+            {carregando
+              ? "Aguarde…"
+              : modo === "entrar"
+                ? "Entrar"
+                : "Criar conta"}
+          </button>
+        </form>
 
-      <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
-        {modo === "entrar" ? "Ainda não tem conta?" : "Já tem conta?"}{" "}
-        <button
-          type="button"
-          onClick={() => {
-            setModo(modo === "entrar" ? "cadastrar" : "entrar");
-            setErro(null);
-            setAviso(null);
-          }}
-          className="font-semibold text-emerald-600 hover:underline dark:text-emerald-400"
-        >
-          {modo === "entrar" ? "Cadastre-se" : "Entrar"}
-        </button>
-      </p>
+        <p className="mt-[18px] text-center text-sm text-slate-500 dark:text-slate-400">
+          {modo === "entrar" ? "Ainda não tem conta?" : "Já tem conta?"}{" "}
+          <button
+            type="button"
+            onClick={() => {
+              setModo(modo === "entrar" ? "cadastrar" : "entrar");
+              setErro(null);
+              setAviso(null);
+            }}
+            className="font-bold text-emerald-700 hover:underline dark:text-emerald-400"
+          >
+            {modo === "entrar" ? "Cadastre-se" : "Entrar"}
+          </button>
+        </p>
+      </div>
     </main>
   );
 }

@@ -52,115 +52,126 @@ export default function FoodForm({ food, onClose, onSuccess }: Props) {
     }
   }
 
+  const bigInput =
+    "w-full rounded-[11px] border border-[#E2D7C4] bg-[#FCFAF5] px-3.5 py-2.5 text-[15px] text-slate-900 outline-none transition focus:border-emerald-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100";
+  const numInput =
+    "w-full rounded-[10px] border border-[#E2D7C4] bg-[#FCFAF5] px-2.5 py-2 text-sm text-slate-900 outline-none transition focus:border-emerald-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100";
+  const numLabel =
+    "mb-1.5 block text-xs font-semibold text-slate-500 dark:text-slate-400";
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-md rounded-lg bg-white p-6 dark:bg-slate-900">
-        <h2 className="text-xl font-bold">
-          {food ? "Editar Alimento" : "Novo Alimento"}
+    <div
+      className="fixed inset-0 z-[60] grid place-items-center bg-[rgba(38,34,28,0.5)] p-[18px] backdrop-blur-[3px]"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-[440px] rounded-[22px] bg-white p-6 shadow-[0_30px_70px_-30px_rgba(0,0,0,0.5)] dark:bg-slate-900"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="mb-[18px] text-[21px] font-bold tracking-tight">
+          {food ? "Editar alimento" : "Novo alimento"}
         </h2>
 
-        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-          <div>
-            <label className="block text-sm font-medium">Nome *</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              className="mt-1 w-full rounded border border-slate-300 bg-white px-3 py-2 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-800"
-              placeholder="Ex.: Frango grelhado"
-            />
-          </div>
+        <form onSubmit={handleSubmit}>
+          <label className="mb-1.5 block text-[13px] font-semibold">Nome</label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+            className={`${bigInput} mb-3.5`}
+            placeholder="Ex.: Frango grelhado"
+          />
 
-          <div>
-            <label className="block text-sm font-medium">Categoria *</label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value as Food["category"])}
-              className="mt-1 w-full rounded border border-slate-300 bg-white px-3 py-2 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-800"
-            >
-              <option value="carbo">Carboidrato</option>
-              <option value="proteina">Proteína</option>
-              <option value="vegetal">Vegetal</option>
-              <option value="fruta">Fruta</option>
-              <option value="outro">Outro</option>
-            </select>
-          </div>
+          <label className="mb-1.5 block text-[13px] font-semibold">
+            Categoria
+          </label>
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value as Food["category"])}
+            className={`${bigInput} mb-3.5 cursor-pointer`}
+          >
+            <option value="proteina">Proteína</option>
+            <option value="carbo">Carboidrato</option>
+            <option value="vegetal">Vegetal</option>
+            <option value="fruta">Fruta</option>
+            <option value="outro">Outro</option>
+          </select>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="mb-3.5 grid grid-cols-2 gap-2.5">
             <div>
-              <label className="block text-xs font-medium">kcal/100g</label>
+              <label className={numLabel}>kcal / 100g</label>
               <input
                 type="number"
                 value={kcal}
                 onChange={(e) => setKcal(e.target.value)}
                 step="0.1"
-                className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-800"
+                className={numInput}
               />
             </div>
             <div>
-              <label className="block text-xs font-medium">Fator de cocção (cozido↔cru)</label>
+              <label className={numLabel}>FC (cozido ÷ cru)</label>
               <input
                 type="number"
                 value={fc}
                 onChange={(e) => setFc(e.target.value)}
                 step="0.01"
-                className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-800"
+                className={numInput}
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
+          <div className="mb-5 grid grid-cols-3 gap-2">
             <div>
-              <label className="block text-xs font-medium">Prot (g)</label>
+              <label className={numLabel}>Prot (g)</label>
               <input
                 type="number"
                 value={protein}
                 onChange={(e) => setProtein(e.target.value)}
                 step="0.1"
-                className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-800"
+                className={numInput}
               />
             </div>
             <div>
-              <label className="block text-xs font-medium">Carb (g)</label>
+              <label className={numLabel}>Carb (g)</label>
               <input
                 type="number"
                 value={carb}
                 onChange={(e) => setCarb(e.target.value)}
                 step="0.1"
-                className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-800"
+                className={numInput}
               />
             </div>
             <div>
-              <label className="block text-xs font-medium">Gord (g)</label>
+              <label className={numLabel}>Gord (g)</label>
               <input
                 type="number"
                 value={fat}
                 onChange={(e) => setFat(e.target.value)}
                 step="0.1"
-                className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-800"
+                className={numInput}
               />
             </div>
           </div>
 
           {erro && (
-            <div className="rounded bg-red-500/10 p-3 text-sm text-red-600 dark:text-red-400">
+            <div className="mb-4 rounded-xl bg-red-500/10 p-3 text-sm text-red-600 dark:text-red-400">
               {erro}
             </div>
           )}
 
-          <div className="flex gap-2 pt-2">
+          <div className="flex gap-2.5">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 rounded border border-slate-300 px-4 py-2 font-medium transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+              className="flex-1 rounded-xl border border-[#E2D7C4] bg-white px-4 py-3 font-semibold text-slate-900 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={carregando}
-              className="flex-1 rounded bg-emerald-600 px-4 py-2 font-medium text-white transition hover:bg-emerald-700 disabled:opacity-60"
+              className="flex-1 rounded-xl bg-emerald-600 px-4 py-3 font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60"
             >
               {carregando ? "Salvando…" : "Salvar"}
             </button>

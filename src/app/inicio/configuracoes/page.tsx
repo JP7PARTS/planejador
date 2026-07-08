@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { linkHousehold, unlinkHousehold } from "@/lib/api/household";
+import SignOutButton from "../sign-out-button";
 
 interface Profile {
   id: string;
@@ -132,25 +133,31 @@ export default function ConfiguracoesPage() {
     salvarBasicos(profile.staples.filter((_, i) => i !== index));
   }
 
+  const cardClass =
+    "rounded-[20px] border border-[#EADFCD] bg-white p-5 dark:border-slate-800 dark:bg-slate-900";
+  const inputClass =
+    "w-full rounded-xl border border-[#E2D7C4] bg-[#FCFAF5] px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-emerald-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100";
+  const inicial = (profile?.display_name || "?").trim().charAt(0).toUpperCase();
+
   return (
-    <main className="mx-auto flex max-w-2xl flex-col gap-6 px-5 py-6">
-      <header className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Configurações</h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Gerencie seu perfil e compartilhamento com o casal
-          </p>
-        </div>
-      </header>
+    <main className="mx-auto flex max-w-[640px] flex-col gap-6 px-5 py-8 sm:py-10">
+      <div>
+        <h1 className="text-[clamp(26px,4vw,34px)] font-bold tracking-tight">
+          Ajustes
+        </h1>
+        <p className="mt-1.5 text-[15px] text-slate-500 dark:text-slate-400">
+          Seu perfil e o vínculo do casal
+        </p>
+      </div>
 
       {erro && (
-        <div className="rounded-lg bg-red-500/10 p-4 text-sm text-red-600 dark:text-red-400">
+        <div className="rounded-xl bg-red-500/10 p-4 text-sm text-red-600 dark:text-red-400">
           {erro}
         </div>
       )}
 
       {sucesso && (
-        <div className="rounded-lg bg-emerald-500/10 p-4 text-sm text-emerald-600 dark:text-emerald-400">
+        <div className="rounded-xl bg-emerald-500/10 p-4 text-sm text-emerald-600 dark:text-emerald-400">
           {sucesso}
         </div>
       )}
@@ -160,49 +167,133 @@ export default function ConfiguracoesPage() {
           Carregando…
         </p>
       ) : profile ? (
-        <>
+        <div className="flex flex-col gap-3.5">
           {/* Perfil */}
-          <div className="rounded-lg border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-            <h2 className="font-semibold">Seu Perfil</h2>
-            <div className="mt-3 space-y-3 text-sm">
+          <div className={cardClass}>
+            <h2 className="mb-3.5 text-[17px] font-bold">Perfil</h2>
+            <div className="flex items-center gap-3.5">
+              <span className="grid size-[54px] place-items-center rounded-2xl bg-emerald-600/10 text-2xl font-bold text-emerald-700 dark:text-emerald-400">
+                {inicial}
+              </span>
               <div>
-                <p className="text-slate-500 dark:text-slate-400">Nome</p>
-                <p className="font-medium">{profile.display_name || "Sem nome"}</p>
-              </div>
-              <div>
-                <p className="text-slate-500 dark:text-slate-400">
-                  Seu Código (compartilhe com seu parceiro)
+                <p className="text-base font-bold">
+                  {profile.display_name || "Sem nome"}
                 </p>
-                <div className="mt-1 flex items-center gap-2">
-                  <code className="flex-1 rounded bg-slate-100 px-2 py-1 font-mono text-xs dark:bg-slate-800">
-                    {profile.id}
-                  </code>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(profile.id);
-                      setSucesso("Código copiado!");
-                      setTimeout(() => setSucesso(null), 3000);
-                    }}
-                    className="rounded bg-slate-600 px-2 py-1 text-xs font-medium text-white transition hover:bg-slate-700"
-                  >
-                    Copiar
-                  </button>
-                </div>
+                <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+                  Perfil pessoal
+                </p>
               </div>
             </div>
           </div>
 
-          {/* Meus temperos & básicos */}
-          <div className="rounded-lg border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-            <h2 className="font-semibold">🧂 Meus temperos & básicos</h2>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-              Itens que você sempre usa pra cozinhar (sal, alho, azeite, cebola,
-              tomate…). Eles aparecem como <strong>complementos</strong> na lista
-              de compras de toda semana, com checkbox pra você conferir o que já
-              tem em casa. Não entram no cálculo de nutrição.
+          {/* Compartilhar com o casal */}
+          <div className={cardClass}>
+            <h2 className="mb-1.5 text-[17px] font-bold">
+              👥 Compartilhar com o casal
+            </h2>
+            <p className="mb-3.5 text-sm text-slate-600 dark:text-slate-300">
+              Ao ativar, você e seu parceiro veem os totais combinados. Nada é
+              compartilhado sem o seu consentimento.
             </p>
 
-            <div className="mt-3 flex gap-2">
+            {/* Seu código de família (sempre disponível para copiar) */}
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.04em] text-slate-500 dark:text-slate-400">
+              Seu ID de família
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={profile.id}
+                readOnly
+                className="flex-1 rounded-xl border border-[#E2D7C4] bg-[#FCFAF5] px-3 py-2.5 font-mono text-sm text-slate-600 outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+              />
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(profile.id);
+                  setSucesso("Código copiado!");
+                  setTimeout(() => setSucesso(null), 3000);
+                }}
+                className="shrink-0 rounded-xl bg-[#EFE7D8] px-4 text-sm font-semibold text-slate-600 transition hover:brightness-95 dark:bg-slate-800 dark:text-slate-300"
+              >
+                Copiar
+              </button>
+            </div>
+
+            {/* Ativar / Desativar */}
+            {profile.share_consent ? (
+              <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900 dark:bg-emerald-950/20">
+                <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-100">
+                  ✅ Compartilhamento ativo
+                </p>
+                <p className="mt-1 text-sm text-emerald-800 dark:text-emerald-200">
+                  Você está compartilhando os dados com seu casal.
+                </p>
+                <button
+                  onClick={handleDesativarCompartilhamento}
+                  disabled={desativando}
+                  className="mt-3 rounded-xl border border-[#F0DAD2] bg-[#FCF4F1] px-4 py-2 text-sm font-semibold text-rose-600 transition hover:brightness-95 disabled:opacity-60 dark:border-rose-900 dark:bg-rose-950/20"
+                >
+                  {desativando ? "Desativando…" : "Desativar"}
+                </button>
+              </div>
+            ) : (
+              <div className="mt-4">
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.04em] text-slate-500 dark:text-slate-400">
+                  Código do seu parceiro
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  <input
+                    type="text"
+                    value={targetHouseholdId}
+                    onChange={(e) => setTargetHouseholdId(e.target.value)}
+                    placeholder="Cole o ID de família do seu parceiro"
+                    className={`${inputClass} min-w-[200px] flex-1 font-mono`}
+                  />
+                  <button
+                    onClick={handleAtivareCompartilhamento}
+                    disabled={ativando}
+                    className="shrink-0 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60"
+                  >
+                    {ativando ? "Ativando…" : "Ativar"}
+                  </button>
+                </div>
+                <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+                  Peça para seu parceiro abrir Ajustes e copiar o "ID de família".
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Seus básicos */}
+          <div className={cardClass}>
+            <h2 className="mb-1.5 text-[17px] font-bold">🧂 Seus básicos</h2>
+            <p className="mb-3 text-sm text-slate-600 dark:text-slate-300">
+              Temperos que aparecem na lista de compras de toda semana (não entram
+              no cálculo).
+            </p>
+
+            {profile.staples.length > 0 && (
+              <div className="mb-3 flex flex-wrap gap-[7px]">
+                {profile.staples.map((s, i) => (
+                  <span
+                    key={s}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-[#E7DECD] bg-[#F7F2E9] px-3 py-1.5 text-[13.5px] font-medium dark:border-slate-700 dark:bg-slate-800"
+                  >
+                    {s}
+                    <button
+                      onClick={() => removerBasico(i)}
+                      disabled={salvandoBasicos}
+                      aria-label={"Remover " + s}
+                      className="text-rose-600 hover:opacity-70 disabled:opacity-60"
+                    >
+                      ✕
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+
+            <div className="flex gap-2">
               <input
                 type="text"
                 value={novoBasico}
@@ -213,113 +304,24 @@ export default function ConfiguracoesPage() {
                     adicionarBasico();
                   }
                 }}
-                placeholder="Ex.: sal, alho, azeite…"
-                className="flex-1 rounded border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-800"
+                placeholder="Adicionar tempero…"
+                className={inputClass}
               />
               <button
                 onClick={adicionarBasico}
                 disabled={salvandoBasicos}
-                className="shrink-0 rounded bg-emerald-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:opacity-60"
+                className="shrink-0 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60"
               >
-                + Adicionar
+                Adicionar
               </button>
             </div>
-
-            {profile.staples.length === 0 ? (
-              <p className="mt-3 text-xs text-slate-400 dark:text-slate-500">
-                Nenhum básico cadastrado ainda.
-              </p>
-            ) : (
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {profile.staples.map((s, i) => (
-                  <span
-                    key={s}
-                    className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-sm text-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                  >
-                    {s}
-                    <button
-                      onClick={() => removerBasico(i)}
-                      disabled={salvandoBasicos}
-                      aria-label={"Remover " + s}
-                      className="text-slate-400 hover:text-red-600 disabled:opacity-60 dark:hover:text-red-400"
-                    >
-                      ✕
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
           </div>
 
-          {/* Status de Compartilhamento */}
-          {profile.share_consent ? (
-            <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-5 dark:border-emerald-900 dark:bg-emerald-950/20">
-              <h2 className="font-semibold text-emerald-900 dark:text-emerald-100">
-                ✅ Compartilhamento Ativo
-              </h2>
-              <p className="mt-2 text-sm text-emerald-800 dark:text-emerald-200">
-                Você está compartilhando seus dados de marmitas com seu casal.
-              </p>
-              <button
-                onClick={handleDesativarCompartilhamento}
-                disabled={desativando}
-                className="mt-3 rounded bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:opacity-60"
-              >
-                {desativando ? "Desativando…" : "Desativar Compartilhamento"}
-              </button>
-            </div>
-          ) : (
-            <div className="rounded-lg border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-              <h2 className="font-semibold">Ativar Compartilhamento com Casal</h2>
-              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-                Compartilhe seus dados de marmitas com seu parceiro/parceira para
-                ver os totais combinados.
-              </p>
-
-              <div className="mt-4 space-y-3">
-                <div>
-                  <label className="block text-sm font-medium">
-                    Código do seu parceiro/parceira *
-                  </label>
-                  <input
-                    type="text"
-                    value={targetHouseholdId}
-                    onChange={(e) => setTargetHouseholdId(e.target.value)}
-                    placeholder="Cole o código que seu parceiro compartilhou"
-                    className="mt-1 w-full rounded border border-slate-300 bg-white px-3 py-2 font-mono text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-800"
-                  />
-                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                    Peça para seu parceiro abrir Configurações e copiar o "Seu
-                    Código"
-                  </p>
-                </div>
-
-                <button
-                  onClick={handleAtivareCompartilhamento}
-                  disabled={ativando}
-                  className="rounded bg-emerald-600 px-4 py-2 font-medium text-white transition hover:bg-emerald-700 disabled:opacity-60"
-                >
-                  {ativando ? "Ativando…" : "Ativar Compartilhamento"}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Info */}
-          <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800 dark:border-blue-900 dark:bg-blue-950/20 dark:text-blue-200">
-            <p className="font-medium">ℹ️ Como funciona:</p>
-            <ol className="mt-2 space-y-1 list-inside list-decimal text-xs">
-              <li>Copie o "Seu Código" e envie para seu parceiro</li>
-              <li>Cole o código do seu parceiro e clique "Ativar"</li>
-              <li>Seu parceiro faz o mesmo (cola o seu código e ativa)</li>
-              <li>
-                Quando os dois ativarem, ambos veem "Totais do Casal" na tela
-                inicial com os dados combinados
-              </li>
-              <li>Qualquer um pode desativar a qualquer momento</li>
-            </ol>
-          </div>
-        </>
+          <SignOutButton
+            className="self-start rounded-xl border border-[#F0DAD2] bg-[#FCF4F1] px-4 py-2.5 text-[14.5px] font-semibold text-rose-600 transition hover:brightness-95 disabled:opacity-60 dark:border-rose-900 dark:bg-rose-950/20"
+            label="Sair da conta"
+          />
+        </div>
       ) : null}
     </main>
   );

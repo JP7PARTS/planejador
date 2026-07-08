@@ -10,13 +10,19 @@ interface Props {
   onRefresh: () => void;
 }
 
+// Ordem e cores conforme a referência visual.
 const CATEGORIAS = {
-  carbo: { label: "Carboidratos", cor: "amber" },
-  proteina: { label: "Proteínas", cor: "rose" },
-  vegetal: { label: "Vegetais", cor: "emerald" },
-  fruta: { label: "Frutas", cor: "orange" },
-  outro: { label: "Outros", cor: "slate" },
+  proteina: { label: "Proteínas", emoji: "🍗", cor: "#C7572F" },
+  carbo: { label: "Carboidratos", emoji: "🍚", cor: "#BF922C" },
+  vegetal: { label: "Vegetais", emoji: "🥦", cor: "#2E6B47" },
+  fruta: { label: "Frutas", emoji: "🍎", cor: "#C0503A" },
+  outro: { label: "Outros", emoji: "🧂", cor: "#8A8172" },
 } as const;
+
+// Formata gramas: inteiro sem casas, senão 1 casa com vírgula (pt-BR).
+function fmtG(n: number): string {
+  return Number.isInteger(n) ? String(n) : n.toFixed(1).replace(".", ",");
+}
 
 export default function AlimentosList({ alimentos, onRefresh }: Props) {
   const [editingFood, setEditingFood] = useState<Food | null>(null);
@@ -43,71 +49,71 @@ export default function AlimentosList({ alimentos, onRefresh }: Props) {
 
   return (
     <>
-      <div className="mb-6 flex gap-2">
+      {/* Cabeçalho */}
+      <div className="flex flex-wrap items-end justify-between gap-3.5">
+        <div>
+          <h1 className="text-[clamp(26px,4vw,34px)] font-bold tracking-tight">
+            Banco de alimentos
+          </h1>
+          <p className="mt-1.5 text-[15px] text-slate-500 dark:text-slate-400">
+            {alimentos.length} alimentos · nutrição por 100g cru
+          </p>
+        </div>
         <button
           onClick={() => setIsCreating(true)}
-          className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white transition hover:bg-emerald-700"
+          className="rounded-xl bg-emerald-600 px-[18px] py-2.5 text-[15px] font-semibold text-white transition hover:bg-emerald-700"
         >
-          + Novo Alimento
+          + Novo alimento
         </button>
       </div>
 
       {erroDelete && (
-        <div className="mb-4 rounded-lg bg-red-500/10 p-4 text-sm text-red-600 dark:text-red-400">
+        <div className="rounded-xl bg-red-500/10 p-4 text-sm text-red-600 dark:text-red-400">
           {erroDelete}
         </div>
       )}
 
-      <div className="space-y-8">
-        {Object.entries(CATEGORIAS).map(([categoria, { label, cor }]) => {
+      <div className="flex flex-col gap-[22px]">
+        {Object.entries(CATEGORIAS).map(([categoria, { label, emoji, cor }]) => {
           const porCategoria = alimentos.filter((f) => f.category === categoria);
           if (porCategoria.length === 0) return null;
 
-          const corClasses = {
-            amber: "bg-amber-500/5 border-amber-300 dark:border-amber-800",
-            rose: "bg-rose-500/5 border-rose-300 dark:border-rose-800",
-            emerald: "bg-emerald-500/5 border-emerald-300 dark:border-emerald-800",
-            orange: "bg-orange-500/5 border-orange-300 dark:border-orange-800",
-            slate: "bg-slate-500/5 border-slate-300 dark:border-slate-800",
-          };
-
           return (
             <section key={categoria}>
-              <h2 className="mb-3 text-lg font-semibold">{label}</h2>
-              <div className="space-y-2">
+              <div className="mb-2.5 flex items-center gap-2.5">
+                <span className="text-lg">{emoji}</span>
+                <h2 className="text-lg font-bold" style={{ color: cor }}>
+                  {label}
+                </h2>
+                <span className="text-[13px] font-semibold text-slate-400">
+                  {porCategoria.length}
+                </span>
+              </div>
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-2.5">
                 {porCategoria.map((alimento) => (
                   <div
                     key={alimento.id}
-                    className={`flex flex-col gap-2 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between ${corClasses[cor as keyof typeof corClasses]}`}
+                    className="flex items-center gap-3 rounded-[14px] border border-[#EADFCD] bg-white p-[13px_15px] dark:border-slate-800 dark:bg-slate-900"
+                    style={{ borderLeft: `4px solid ${cor}` }}
                   >
-                    <div className="flex-1">
-                      <p className="font-medium">{alimento.name}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        Fator de cocção: {alimento.fc.toFixed(2)} (cozido ÷ cru) • Nutrição por 100g CRU
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[15.5px] font-semibold">
+                        {alimento.name}
+                      </p>
+                      <p className="mt-0.5 text-[12.5px] text-slate-500 dark:text-slate-400">
+                        {alimento.kcal_per_100g.toFixed(0)} kcal ·{" "}
+                        {fmtG(alimento.protein_g_per_100g)}P ·{" "}
+                        {fmtG(alimento.carb_g_per_100g)}C ·{" "}
+                        {fmtG(alimento.fat_g_per_100g)}G
+                      </p>
+                      <p className="mt-0.5 text-[11.5px] text-slate-400">
+                        FC {alimento.fc.toFixed(2)} · cozido ÷ cru
                       </p>
                     </div>
-                    <div className="grid grid-cols-4 gap-2 text-xs">
-                      <div>
-                        <p className="text-slate-500 dark:text-slate-400">kcal/100g</p>
-                        <p className="font-semibold">{alimento.kcal_per_100g.toFixed(0)}</p>
-                      </div>
-                      <div>
-                        <p className="text-slate-500 dark:text-slate-400">prot/100g</p>
-                        <p className="font-semibold">{alimento.protein_g_per_100g.toFixed(1)}g</p>
-                      </div>
-                      <div>
-                        <p className="text-slate-500 dark:text-slate-400">carb/100g</p>
-                        <p className="font-semibold">{alimento.carb_g_per_100g.toFixed(1)}g</p>
-                      </div>
-                      <div>
-                        <p className="text-slate-500 dark:text-slate-400">gord/100g</p>
-                        <p className="font-semibold">{alimento.fat_g_per_100g.toFixed(1)}g</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-1">
+                    <div className="flex flex-col gap-1">
                       <button
                         onClick={() => setEditingFood(alimento)}
-                        className="rounded px-2 py-1 text-sm font-medium text-slate-600 transition hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-800"
+                        className="h-[30px] w-8 rounded-[9px] border border-[#E7DECD] bg-[#FCFAF5] text-[13px] transition hover:brightness-95 dark:border-slate-700 dark:bg-slate-800"
                         title="Editar"
                       >
                         ✏️
@@ -115,8 +121,8 @@ export default function AlimentosList({ alimentos, onRefresh }: Props) {
                       <button
                         onClick={() => handleDelete(alimento.id)}
                         disabled={deletandoId === alimento.id}
-                        className="rounded px-2 py-1 text-sm font-medium text-red-600 transition hover:bg-red-200 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-950"
-                        title="Deletar"
+                        className="h-[30px] w-8 rounded-[9px] border border-[#F0DAD2] bg-[#FCF4F1] text-[13px] transition hover:brightness-95 disabled:opacity-50 dark:border-rose-900 dark:bg-rose-950/20"
+                        title="Excluir"
                       >
                         {deletandoId === alimento.id ? "…" : "🗑️"}
                       </button>

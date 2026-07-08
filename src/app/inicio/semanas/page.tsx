@@ -184,19 +184,19 @@ export default function SemanasPage() {
   const normais = semanas.filter((s) => !s.is_favorite);
 
   return (
-    <main className="mx-auto flex max-w-4xl flex-col gap-6 px-5 py-6">
-      <header className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Minhas Semanas</h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            {semanas.length} semana{semanas.length !== 1 ? "s" : ""} salva
-            {semanas.length !== 1 ? "s" : ""}
-          </p>
-        </div>
-      </header>
+    <main className="mx-auto flex max-w-5xl flex-col gap-6 px-5 py-8 sm:py-10">
+      <div>
+        <h1 className="text-[clamp(26px,4vw,34px)] font-bold tracking-tight">
+          Minhas semanas
+        </h1>
+        <p className="mt-1.5 text-[15px] text-slate-500 dark:text-slate-400">
+          {semanas.length} cardápio{semanas.length !== 1 ? "s" : ""} salvo
+          {semanas.length !== 1 ? "s" : ""}
+        </p>
+      </div>
 
       {erro && (
-        <div className="rounded-lg bg-red-500/10 p-4 text-sm text-red-600 dark:text-red-400">
+        <div className="rounded-xl bg-red-500/10 p-4 text-sm text-red-600 dark:text-red-400">
           {erro}
         </div>
       )}
@@ -206,13 +206,13 @@ export default function SemanasPage() {
           Carregando semanas…
         </p>
       ) : semanas.length === 0 ? (
-        <div className="rounded-lg border border-slate-200 bg-slate-50 p-8 text-center dark:border-slate-800 dark:bg-slate-900">
+        <div className="rounded-[18px] border border-[#EADFCD] bg-white p-8 text-center dark:border-slate-800 dark:bg-slate-900">
           <p className="text-slate-600 dark:text-slate-300">
             Nenhuma semana salva ainda.
           </p>
           <Link
             href="/inicio/semana"
-            className="mt-3 inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
+            className="mt-3 inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
           >
             Montar a primeira semana →
           </Link>
@@ -221,8 +221,10 @@ export default function SemanasPage() {
         <>
           {favoritas.length > 0 && (
             <section>
-              <h2 className="mb-3 text-lg font-semibold">⭐ Favoritas</h2>
-              <div className="space-y-2">
+              <h2 className="mb-2.5 text-base font-bold text-rose-600 dark:text-rose-400">
+                ⭐ Favoritas
+              </h2>
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-3">
                 {favoritas.map((week) => (
                   <SemanaCard
                     key={week.id}
@@ -242,8 +244,8 @@ export default function SemanasPage() {
 
           {normais.length > 0 && (
             <section>
-              <h2 className="mb-3 text-lg font-semibold">Semanas</h2>
-              <div className="space-y-2">
+              <h2 className="mb-2.5 text-base font-bold">Todas</h2>
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-3">
                 {normais.map((week) => (
                   <SemanaCard
                     key={week.id}
@@ -287,62 +289,73 @@ function SemanaCard({
   onDuplicate,
   deletando,
 }: SemanaCardProps) {
-  const dataFormatada = new Date(week.created_at).toLocaleDateString("pt-BR");
+  const href = daParceira
+    ? `/inicio/semana/ver/${week.id}`
+    : `/inicio/semana?semanaId=${week.id}`;
+
+  const marmitasTxt = week.is_shared
+    ? `${week.num_marmitas} + ${week.num_marmitas_p2} marmitas`
+    : `${week.num_marmitas} marmitas`;
+
+  const meta = resumo
+    ? `${marmitasTxt} · ${resumo.totalKcal.toFixed(0)} kcal · ${resumo.totalProtein.toFixed(0)} g prot`
+    : marmitasTxt;
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex-1">
+    <div className="rounded-[18px] border border-[#EADFCD] bg-white p-[18px] dark:border-slate-800 dark:bg-slate-900">
+      <div className="flex items-start justify-between gap-2.5">
         <Link
-          href={
-            daParceira
-              ? `/inicio/semana/ver/${week.id}`
-              : `/inicio/semana?semanaId=${week.id}`
-          }
-          className="font-medium text-emerald-600 hover:underline dark:text-emerald-400"
+          href={href}
+          className="text-[17px] font-bold text-emerald-700 hover:underline dark:text-emerald-400 [font-family:var(--font-display)]"
         >
           {week.title}
         </Link>
-        {week.is_shared && (
-          <span className="ml-2 inline-flex items-center rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-900 dark:text-purple-200">
-            {daParceira
-              ? `👥 compartilhada por ${nomeDono || "parceira"}`
-              : week.person2_name
-                ? `👥 com ${week.person2_name}`
-                : "👥 conjunta"}
-          </span>
-        )}
-        <p className="text-xs text-slate-500 dark:text-slate-400">
-          {dataFormatada} •{" "}
-          {week.is_shared
-            ? `${week.num_marmitas} + ${week.num_marmitas_p2} marmitas`
-            : `${week.num_marmitas} marmitas`}
-        </p>
-        {resumo && (
-          <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
-            {resumo.totalKcal.toFixed(0)} kcal • {resumo.totalProtein.toFixed(1)}g prot
-          </p>
-        )}
-        {week.notes && (
-          <p className="mt-1 text-xs italic text-slate-500 dark:text-slate-400">
-            "{week.notes}"
-          </p>
-        )}
-      </div>
-
-      <div className="flex gap-1">
-        {/* Favoritar e apagar só para o dono; a parceira só visualiza/duplica. */}
         {!daParceira && (
           <button
             onClick={onToggleFavorite}
-            className="rounded px-2 py-1 text-sm font-medium text-yellow-600 transition hover:bg-yellow-100 dark:text-yellow-400 dark:hover:bg-yellow-950"
-            title={week.is_favorite ? "Remover de favoritos" : "Adicionar aos favoritos"}
+            className="text-[17px] leading-none transition hover:scale-110"
+            title={
+              week.is_favorite
+                ? "Remover de favoritos"
+                : "Adicionar aos favoritos"
+            }
           >
-            {week.is_favorite ? "⭐" : "☆"}
+            <span className={week.is_favorite ? "" : "text-[#D6CDBB]"}>
+              {week.is_favorite ? "⭐" : "☆"}
+            </span>
           </button>
         )}
+      </div>
+
+      {week.is_shared && (
+        <span className="mt-2 inline-block rounded-full bg-[#F0E7F2] px-2.5 py-1 text-xs font-semibold text-[#8E4E9E] dark:bg-purple-950/40 dark:text-purple-300">
+          {daParceira
+            ? `👥 dividida com ${nomeDono || "parceira"}`
+            : week.person2_name
+              ? `👥 dividida com ${week.person2_name}`
+              : "👥 conjunta"}
+        </span>
+      )}
+
+      <p className="mt-2.5 text-[13px] text-slate-500 dark:text-slate-400">
+        {meta}
+      </p>
+      {week.notes && (
+        <p className="mt-1 text-[13px] italic text-slate-500 dark:text-slate-400">
+          &ldquo;{week.notes}&rdquo;
+        </p>
+      )}
+
+      <div className="mt-3.5 flex gap-1.5">
+        <Link
+          href={href}
+          className="flex-1 rounded-[10px] bg-[#E9F0E7] py-2.5 text-center text-[13.5px] font-semibold text-emerald-700 transition hover:brightness-95 dark:bg-emerald-950/40 dark:text-emerald-300"
+        >
+          Abrir
+        </Link>
         <button
           onClick={onDuplicate}
-          className="rounded px-2 py-1 text-sm font-medium text-blue-600 transition hover:bg-blue-100 dark:text-blue-400 dark:hover:bg-blue-950"
+          className="rounded-[10px] border border-[#E7DECD] bg-[#FCFAF5] px-3 text-[13px] transition hover:brightness-95 dark:border-slate-700 dark:bg-slate-800"
           title="Duplicar"
         >
           📋
@@ -351,8 +364,8 @@ function SemanaCard({
           <button
             onClick={onDelete}
             disabled={deletando}
-            className="rounded px-2 py-1 text-sm font-medium text-red-600 transition hover:bg-red-100 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-950"
-            title="Deletar"
+            className="rounded-[10px] border border-[#F0DAD2] bg-[#FCF4F1] px-3 text-[13px] transition hover:brightness-95 disabled:opacity-50 dark:border-rose-900 dark:bg-rose-950/20"
+            title="Excluir"
           >
             {deletando ? "…" : "🗑️"}
           </button>

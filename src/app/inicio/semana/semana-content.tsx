@@ -301,26 +301,25 @@ export default function SemanaContent() {
         },
       ];
 
+  const inp =
+    "rounded-[9px] border border-[#E2D7C4] bg-white px-2.5 py-1.5 text-sm font-semibold text-slate-900 outline-none transition focus:border-emerald-600 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100";
+  const cardCls =
+    "rounded-[20px] border border-[#EADFCD] bg-white p-5 dark:border-slate-800 dark:bg-slate-900";
+
   return (
-    <main className="mx-auto flex max-w-4xl flex-col gap-6 px-5 py-6">
-      <header className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Montar a Semana</h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Defina a quantidade de marmitas e os alimentos que você preparará
-          </p>
-        </div>
-        <Link
-          href="/inicio/semanas"
-          className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-          title="Ver minhas semanas salvas"
-        >
-          📚 Salvas
-        </Link>
-      </header>
+    <main className="mx-auto flex max-w-5xl flex-col gap-5 px-5 py-8 sm:py-10">
+      <div>
+        <h1 className="text-[clamp(26px,4vw,34px)] font-bold tracking-tight">
+          Montar a semana
+        </h1>
+        <p className="mt-1.5 text-[15px] text-slate-500 dark:text-slate-400">
+          Diga o peso <strong className="text-slate-900 dark:text-slate-200">pronto</strong> por marmita — mostramos quanto comprar{" "}
+          <strong className="text-slate-900 dark:text-slate-200">cru</strong>.
+        </p>
+      </div>
 
       {erro && (
-        <div className="rounded-lg bg-red-500/10 p-4 text-sm text-red-600 dark:text-red-400">
+        <div className="rounded-xl bg-red-500/10 p-4 text-sm text-red-600 dark:text-red-400">
           {erro}
         </div>
       )}
@@ -330,192 +329,207 @@ export default function SemanaContent() {
           Carregando alimentos…
         </p>
       ) : (
-        <>
-          {/* Toggle: semana conjunta */}
-          <div className="rounded-lg border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-            <label className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                checked={isShared}
-                onChange={(e) => setIsShared(e.target.checked)}
-                className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
-              />
-              <span className="text-sm font-medium">
-                👥 Semana conjunta (dividir com outra pessoa)
-              </span>
-            </label>
-
-            {isShared &&
-              (linked && partnerName ? (
-                <div className="mt-3 rounded bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200">
-                  🔗 Compartilhando com <strong>{partnerName}</strong> — esta
-                  semana também aparecerá na conta dela.
-                </div>
-              ) : (
-                <div className="mt-3">
-                  <label className="block text-xs font-medium">
-                    Nome da outra pessoa
-                  </label>
-                  <input
-                    type="text"
-                    value={person2Name}
-                    onChange={(e) => setPerson2Name(e.target.value)}
-                    placeholder="Ex.: Namorada"
-                    className="mt-1 w-full max-w-xs rounded border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-800"
-                  />
-                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                    Dica: para a semana aparecer na conta dela, vinculem as contas
-                    em Configurações.
-                  </p>
-                </div>
-              ))}
-          </div>
-
-          {/* Input: número de marmitas */}
-          <div className="rounded-lg border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-            {isShared ? (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="block text-sm font-medium">
-                    Marmitas de {meuNome}
-                  </label>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.55fr_1fr] lg:items-start">
+          {/* ===================== COLUNA ESQUERDA ===================== */}
+          <div className="flex flex-col gap-3.5">
+            {/* Marmitas + toggle conjunta */}
+            <div className={`${cardCls} flex flex-wrap items-center gap-x-[18px] gap-y-4`}>
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.04em] text-slate-500 dark:text-slate-400">
+                  Quantas marmitas?
+                </label>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setNumMarmitas(Math.max(1, numMarmitas - 1))}
+                    className="size-[38px] rounded-[11px] border border-[#E2D7C4] bg-[#FCFAF5] text-xl text-slate-900 transition hover:brightness-95 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                    aria-label="Menos uma marmita"
+                  >
+                    −
+                  </button>
                   <input
                     type="number"
+                    min="1"
                     value={numMarmitas}
                     onChange={(e) =>
                       setNumMarmitas(Math.max(1, Number(e.target.value)))
                     }
-                    min="1"
-                    className="mt-2 w-full rounded border border-slate-300 bg-white px-3 py-2 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-800"
+                    className="w-[70px] rounded-[11px] border border-[#E2D7C4] bg-[#FCFAF5] py-2 text-center text-lg font-bold text-slate-900 outline-none focus:border-emerald-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium">
-                    Marmitas de {person2Name || "outra pessoa"}
-                  </label>
-                  <input
-                    type="number"
-                    value={numMarmitasP2}
-                    onChange={(e) =>
-                      setNumMarmitasP2(Math.max(1, Number(e.target.value)))
-                    }
-                    min="1"
-                    className="mt-2 w-full rounded border border-slate-300 bg-white px-3 py-2 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-800"
-                  />
+                  <button
+                    onClick={() => setNumMarmitas(numMarmitas + 1)}
+                    className="size-[38px] rounded-[11px] border border-[#E2D7C4] bg-[#FCFAF5] text-xl text-slate-900 transition hover:brightness-95 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                    aria-label="Mais uma marmita"
+                  >
+                    +
+                  </button>
                 </div>
               </div>
-            ) : (
-              <>
-                <label className="block text-sm font-medium">
-                  Quantas marmitas você fará?
-                </label>
-                <input
-                  type="number"
-                  value={numMarmitas}
-                  onChange={(e) =>
-                    setNumMarmitas(Math.max(1, Number(e.target.value)))
-                  }
-                  min="1"
-                  className="mt-2 w-full max-w-xs rounded border border-slate-300 bg-white px-3 py-2 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-800"
-                />
-              </>
-            )}
-          </div>
 
-          {/* Tabela de linhas de alimentos */}
-          <div className="rounded-lg border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Alimentos da Semana</h2>
-              <button
-                onClick={adicionarLinha}
-                className="rounded bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-emerald-700"
-              >
-                + Adicionar
-              </button>
+              <label className="ml-auto flex cursor-pointer items-center gap-2.5 rounded-xl border border-[#E7DECD] bg-[#F7F2E9] px-3.5 py-2.5 dark:border-slate-700 dark:bg-slate-800">
+                <input
+                  type="checkbox"
+                  checked={isShared}
+                  onChange={(e) => setIsShared(e.target.checked)}
+                  className="size-[17px] accent-emerald-600"
+                />
+                <span className="text-sm font-semibold">👥 Semana conjunta</span>
+              </label>
+
+              {/* Painel conjunta: parceiro + marmitas p2 */}
+              {isShared && (
+                <div className="w-full border-t border-[#EFE7D8] pt-3.5 dark:border-slate-800">
+                  {linked && partnerName ? (
+                    <div className="rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200">
+                      🔗 Compartilhando com <strong>{partnerName}</strong> — esta
+                      semana também aparecerá na conta dela.
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="mb-1.5 block text-xs font-semibold text-slate-500 dark:text-slate-400">
+                        Nome da outra pessoa
+                      </label>
+                      <input
+                        type="text"
+                        value={person2Name}
+                        onChange={(e) => setPerson2Name(e.target.value)}
+                        placeholder="Ex.: Namorada"
+                        className="w-full max-w-xs rounded-xl border border-[#E2D7C4] bg-[#FCFAF5] px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                      />
+                    </div>
+                  )}
+                  <div className="mt-3 flex flex-wrap gap-4">
+                    <div>
+                      <label className="mb-1 block text-xs font-semibold text-slate-500 dark:text-slate-400">
+                        Marmitas de {meuNome}
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={numMarmitas}
+                        onChange={(e) =>
+                          setNumMarmitas(Math.max(1, Number(e.target.value)))
+                        }
+                        className={`${inp} w-[90px] text-center`}
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-semibold text-slate-500 dark:text-slate-400">
+                        Marmitas de {person2Name || "outra pessoa"}
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={numMarmitasP2}
+                        onChange={(e) =>
+                          setNumMarmitasP2(Math.max(1, Number(e.target.value)))
+                        }
+                        className={`${inp} w-[90px] text-center`}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {rows.length === 0 ? (
-              <p className="text-center text-slate-500 dark:text-slate-400">
-                Nenhum alimento adicionado. Clique em "+ Adicionar" para começar.
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {rows.map((linha, idx) => {
-                  const food = alimentos.find((f) => f.id === linha.foodId);
-                  const resP1 =
-                    food && linha.p1On && linha.p1Grams > 0
-                      ? calculateWeekItem(food, linha.p1Grams, linha.p1Marmitas)
-                      : null;
-                  const resP2 =
-                    food && isShared && linha.p2On && linha.p2Grams > 0
-                      ? calculateWeekItem(food, linha.p2Grams, linha.p2Marmitas)
-                      : null;
+            {/* Alimentos da semana */}
+            <div className={cardCls}>
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="text-lg font-bold [font-family:var(--font-display)]">
+                  Alimentos da semana
+                </h2>
+                <button
+                  onClick={adicionarLinha}
+                  className="rounded-[10px] bg-[#E9F0E7] px-3.5 py-2 text-sm font-semibold text-emerald-700 transition hover:brightness-95 dark:bg-emerald-950/40 dark:text-emerald-300"
+                >
+                  + Adicionar
+                </button>
+              </div>
 
-                  // Campos [g cozido/marmita] + [nº marmitas] de uma pessoa.
-                  const campos = (
-                    on: boolean,
-                    grams: number,
-                    marmitas: number,
-                    setGrams: (v: number) => void,
-                    setMarmitas: (v: number) => void
-                  ) => (
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs font-medium">
-                          g cozido/marmita
-                        </label>
-                        <input
-                          type="number"
-                          value={grams}
-                          disabled={!on}
-                          onChange={(e) => setGrams(Number(e.target.value))}
-                          min="0"
-                          step="1"
-                          className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium">
-                          nº marmitas
-                        </label>
-                        <input
-                          type="number"
-                          value={marmitas}
-                          disabled={!on}
-                          onChange={(e) => setMarmitas(Number(e.target.value))}
-                          min="1"
-                          step="1"
-                          className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800"
-                        />
-                      </div>
-                    </div>
-                  );
+              {rows.length === 0 ? (
+                <p className="py-6 text-center text-[14.5px] text-slate-400">
+                  Nenhum alimento ainda. Clique em{" "}
+                  <strong>+ Adicionar</strong> para começar.
+                </p>
+              ) : (
+                <div className="flex flex-col gap-2.5">
+                  {rows.map((linha, idx) => {
+                    const food = alimentos.find((f) => f.id === linha.foodId);
+                    const resP1 =
+                      food && linha.p1On && linha.p1Grams > 0
+                        ? calculateWeekItem(food, linha.p1Grams, linha.p1Marmitas)
+                        : null;
+                    const resP2 =
+                      food && isShared && linha.p2On && linha.p2Grams > 0
+                        ? calculateWeekItem(food, linha.p2Grams, linha.p2Marmitas)
+                        : null;
 
-                  // Mini-resultado (cru + kcal + prot) de uma pessoa.
-                  const mini = (label: string, r: WeekItemResult | null) =>
-                    r ? (
-                      <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                        {label}:{" "}
-                        <span className="font-semibold text-emerald-700 dark:text-emerald-300">
-                          {r.rawTotal.toFixed(0)}g cru
-                        </span>{" "}
-                        • {r.kcalTotal.toFixed(0)} kcal •{" "}
-                        {r.proteinTotal.toFixed(1)}g prot
-                      </p>
-                    ) : null;
-
-                  return (
-                    <div
-                      key={idx}
-                      className="space-y-2 rounded border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800"
-                    >
-                      {/* Alimento (busca) + botão remover no topo */}
-                      <div className="flex items-start gap-2">
-                        <div className="flex-1">
-                          <label className="block text-xs font-medium">
-                            Alimento
+                    // Campos [g cozido/marmita] + [nº marmitas] de uma pessoa.
+                    const campos = (
+                      on: boolean,
+                      grams: number,
+                      marmitas: number,
+                      setGrams: (v: number) => void,
+                      setMarmitas: (v: number) => void
+                    ) => (
+                      <div className="flex items-end gap-3">
+                        <div className="text-center">
+                          <label className="mb-1 block text-[10.5px] font-semibold text-slate-400">
+                            pronto/marmita
                           </label>
-                          <div className="mt-1">
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="number"
+                              value={grams}
+                              disabled={!on}
+                              onChange={(e) => setGrams(Number(e.target.value))}
+                              min="0"
+                              step="1"
+                              className={`${inp} w-[62px] text-center`}
+                            />
+                            <span className="text-xs font-semibold text-slate-400">
+                              g
+                            </span>
+                          </div>
+                        </div>
+                        <div className="text-center">
+                          <label className="mb-1 block text-[10.5px] font-semibold text-slate-400">
+                            nº marmitas
+                          </label>
+                          <input
+                            type="number"
+                            value={marmitas}
+                            disabled={!on}
+                            onChange={(e) => setMarmitas(Number(e.target.value))}
+                            min="1"
+                            step="1"
+                            className={`${inp} w-[62px] text-center`}
+                          />
+                        </div>
+                      </div>
+                    );
+
+                    // Resumo ao vivo (cru + kcal + prot).
+                    const mini = (r: WeekItemResult | null) =>
+                      r ? (
+                        <div className="mt-2.5 flex flex-wrap items-center gap-2 border-t border-dashed border-[#E7DECD] pt-2.5 dark:border-slate-700">
+                          <span className="text-[13.5px] font-bold text-emerald-700 dark:text-emerald-400">
+                            {r.rawTotal.toFixed(0)} g crus no total
+                          </span>
+                          <span className="text-[#D6CDBB]">·</span>
+                          <span className="text-[13px] text-slate-600 dark:text-slate-400">
+                            {r.kcalTotal.toFixed(0)} kcal ·{" "}
+                            {r.proteinTotal.toFixed(0)} g prot
+                          </span>
+                        </div>
+                      ) : null;
+
+                    return (
+                      <div
+                        key={idx}
+                        className="rounded-[14px] border border-[#EADFCD] bg-[#FCFAF5] p-3 dark:border-slate-700 dark:bg-slate-800"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <div className="min-w-0 flex-1">
                             <AlimentoSelect
                               alimentos={alimentos}
                               value={linha.foodId}
@@ -524,239 +538,153 @@ export default function SemanaContent() {
                               }
                             />
                           </div>
-                        </div>
-                        <button
-                          onClick={() => removerLinha(idx)}
-                          title="Remover alimento"
-                          aria-label="Remover alimento"
-                          className="mt-5 shrink-0 rounded px-2 py-1.5 text-sm font-medium text-red-600 transition hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-950"
-                        >
-                          🗑️
-                        </button>
-                      </div>
-
-                      {!isShared ? (
-                        <>
-                          {campos(
-                            true,
-                            linha.p1Grams,
-                            linha.p1Marmitas,
-                            (v) => atualizarLinha(idx, { p1Grams: v }),
-                            (v) => atualizarLinha(idx, { p1Marmitas: v })
-                          )}
-                          {food &&
-                            mini(
-                              "Total",
-                              resP1
+                          {!isShared &&
+                            campos(
+                              true,
+                              linha.p1Grams,
+                              linha.p1Marmitas,
+                              (v) => atualizarLinha(idx, { p1Grams: v }),
+                              (v) => atualizarLinha(idx, { p1Marmitas: v })
                             )}
-                        </>
-                      ) : (
-                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                          {/* Pessoa 1 (quem monta) */}
-                          <div className="rounded border border-slate-200 bg-white p-2 dark:border-slate-700 dark:bg-slate-900">
-                            <label className="flex items-center gap-2 text-xs font-semibold">
-                              <input
-                                type="checkbox"
-                                checked={linha.p1On}
-                                onChange={(e) =>
-                                  atualizarLinha(idx, { p1On: e.target.checked })
-                                }
-                                className="size-4 accent-emerald-600"
-                              />
-                              {meuNome}
-                            </label>
-                            <div className="mt-2">
-                              {campos(
-                                linha.p1On,
-                                linha.p1Grams,
-                                linha.p1Marmitas,
-                                (v) => atualizarLinha(idx, { p1Grams: v }),
-                                (v) => atualizarLinha(idx, { p1Marmitas: v })
-                              )}
-                            </div>
-                            {food && linha.p1On && mini("Compra", resP1)}
-                          </div>
-
-                          {/* Pessoa 2 (parceira) */}
-                          <div className="rounded border border-slate-200 bg-white p-2 dark:border-slate-700 dark:bg-slate-900">
-                            <label className="flex items-center gap-2 text-xs font-semibold">
-                              <input
-                                type="checkbox"
-                                checked={linha.p2On}
-                                onChange={(e) =>
-                                  atualizarLinha(idx, { p2On: e.target.checked })
-                                }
-                                className="size-4 accent-emerald-600"
-                              />
-                              {person2Name || "Outra pessoa"}
-                            </label>
-                            <div className="mt-2">
-                              {campos(
-                                linha.p2On,
-                                linha.p2Grams,
-                                linha.p2Marmitas,
-                                (v) => atualizarLinha(idx, { p2Grams: v }),
-                                (v) => atualizarLinha(idx, { p2Marmitas: v })
-                              )}
-                            </div>
-                            {food && linha.p2On && mini("Compra", resP2)}
-                          </div>
+                          <button
+                            onClick={() => removerLinha(idx)}
+                            title="Remover"
+                            aria-label="Remover alimento"
+                            className="self-center p-1 text-base text-rose-600 transition hover:opacity-70"
+                          >
+                            ✕
+                          </button>
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
 
-          {/* Resultados: lista de compras e nutrição */}
-          {resumo && (
-            <>
-              {/* Lista de Preparo/Compras (total) */}
-              <ListaCompras
-                titulo={
-                  (tituloSemana || "Minha semana") + (isShared ? " (Total)" : "")
-                }
-                itens={buildShoppingList(resumo)}
-                complementos={complementos}
-                storageKey={semanaId ?? "nova"}
-              />
+                        {!isShared ? (
+                          food && mini(resP1)
+                        ) : (
+                          <div className="mt-2.5 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                            {/* Pessoa 1 */}
+                            <div className="rounded-[10px] border border-[#EADFCD] bg-white p-2.5 dark:border-slate-700 dark:bg-slate-900">
+                              <label className="flex items-center gap-2 text-xs font-semibold">
+                                <input
+                                  type="checkbox"
+                                  checked={linha.p1On}
+                                  onChange={(e) =>
+                                    atualizarLinha(idx, {
+                                      p1On: e.target.checked,
+                                    })
+                                  }
+                                  className="size-4 accent-emerald-600"
+                                />
+                                {meuNome}
+                              </label>
+                              <div className="mt-2">
+                                {campos(
+                                  linha.p1On,
+                                  linha.p1Grams,
+                                  linha.p1Marmitas,
+                                  (v) => atualizarLinha(idx, { p1Grams: v }),
+                                  (v) => atualizarLinha(idx, { p1Marmitas: v })
+                                )}
+                              </div>
+                              {food && linha.p1On && mini(resP1)}
+                            </div>
 
-              {/* Divisão por pessoa (só na semana conjunta) */}
-              {isShared && (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <ResumoPessoa titulo={meuNome} resumo={resumoEu} />
-                  <ResumoPessoa
-                    titulo={person2Name || "Outra pessoa"}
-                    resumo={resumoP2}
-                  />
-                </div>
-              )}
-
-              {/* Nutrição da Semana (total) */}
-              <div className="rounded-lg border border-blue-200 bg-blue-50 p-5 dark:border-blue-900 dark:bg-blue-950/20">
-                <h2 className="mb-3 text-lg font-semibold text-blue-900 dark:text-blue-100">
-                  Nutrição da Semana{isShared ? " — Total" : ""}
-                </h2>
-                <div className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
-                  <div>
-                    <p className="text-slate-600 dark:text-slate-400">
-                      Total kcal
-                    </p>
-                    <p className="mt-1 text-xl font-bold text-blue-700 dark:text-blue-300">
-                      {resumo.totalKcal.toFixed(0)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-slate-600 dark:text-slate-400">
-                      Total proteína
-                    </p>
-                    <p className="mt-1 text-xl font-bold text-blue-700 dark:text-blue-300">
-                      {resumo.totalProtein.toFixed(1)}g
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-slate-600 dark:text-slate-400">
-                      Total carbs
-                    </p>
-                    <p className="mt-1 text-xl font-bold text-blue-700 dark:text-blue-300">
-                      {resumo.totalCarb.toFixed(1)}g
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-slate-600 dark:text-slate-400">
-                      Total gordura
-                    </p>
-                    <p className="mt-1 text-xl font-bold text-blue-700 dark:text-blue-300">
-                      {resumo.totalFat.toFixed(1)}g
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-4 border-t border-blue-200 pt-4 dark:border-blue-900">
-                  <p className="mb-2 text-xs font-medium text-slate-600 dark:text-slate-400">
-                    Média por marmita
-                  </p>
-                  <div className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
-                    <div>
-                      <p className="text-slate-600 dark:text-slate-400">kcal</p>
-                      <p className="font-semibold text-blue-700 dark:text-blue-300">
-                        {resumo.avgKcalPerMarmita.toFixed(0)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-slate-600 dark:text-slate-400">prot</p>
-                      <p className="font-semibold text-blue-700 dark:text-blue-300">
-                        {resumo.avgProteinPerMarmita.toFixed(1)}g
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-slate-600 dark:text-slate-400">carb</p>
-                      <p className="font-semibold text-blue-700 dark:text-blue-300">
-                        {resumo.avgCarbPerMarmita.toFixed(1)}g
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-slate-600 dark:text-slate-400">gord</p>
-                      <p className="font-semibold text-blue-700 dark:text-blue-300">
-                        {resumo.avgFatPerMarmita.toFixed(1)}g
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* Complementos (temperos & básicos) */}
-          <div className="rounded-lg border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-            <h2 className="text-lg font-semibold">
-              🧂 Complementos (temperos & básicos)
-            </h2>
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-              Itens pra conferir na despensa (não entram no cálculo). Aparecem na
-              lista de compras com checkbox.
-            </p>
-
-            {/* Base pessoal (aparece em toda semana) */}
-            <div className="mt-3">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                  Seus básicos (todas as semanas)
-                </p>
-                <Link
-                  href="/inicio/configuracoes"
-                  className="text-xs font-medium text-emerald-700 hover:underline dark:text-emerald-400"
-                >
-                  editar em Configurações
-                </Link>
-              </div>
-              {basicos.length === 0 ? (
-                <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
-                  Nenhum básico cadastrado ainda. Cadastre sal, alho, azeite… em
-                  Configurações.
-                </p>
-              ) : (
-                <div className="mt-1 flex flex-wrap gap-1.5">
-                  {basicos.map((b) => (
-                    <span
-                      key={b}
-                      className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                    >
-                      {b}
-                    </span>
-                  ))}
+                            {/* Pessoa 2 */}
+                            <div className="rounded-[10px] border border-[#EADFCD] bg-white p-2.5 dark:border-slate-700 dark:bg-slate-900">
+                              <label className="flex items-center gap-2 text-xs font-semibold">
+                                <input
+                                  type="checkbox"
+                                  checked={linha.p2On}
+                                  onChange={(e) =>
+                                    atualizarLinha(idx, {
+                                      p2On: e.target.checked,
+                                    })
+                                  }
+                                  className="size-4 accent-emerald-600"
+                                />
+                                {person2Name || "Outra pessoa"}
+                              </label>
+                              <div className="mt-2">
+                                {campos(
+                                  linha.p2On,
+                                  linha.p2Grams,
+                                  linha.p2Marmitas,
+                                  (v) => atualizarLinha(idx, { p2Grams: v }),
+                                  (v) => atualizarLinha(idx, { p2Marmitas: v })
+                                )}
+                              </div>
+                              {food && linha.p2On && mini(resP2)}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
 
-            {/* Extras só desta semana */}
-            <div className="mt-4">
-              <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                Extras desta semana
+            {/* Complementos */}
+            <div className={cardCls}>
+              <h2 className="mb-1 text-base font-bold [font-family:var(--font-display)]">
+                🧂 Complementos
+              </h2>
+              <p className="mb-3 text-[13px] text-slate-500 dark:text-slate-400">
+                Temperos e básicos pra conferir na despensa (não entram no
+                cálculo).
               </p>
-              <div className="mt-1 flex gap-2">
+
+              {/* Básicos pessoais */}
+              <div className="mb-3">
+                <div className="mb-1 flex items-center justify-between gap-2">
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                    Seus básicos (todas as semanas)
+                  </p>
+                  <Link
+                    href="/inicio/configuracoes"
+                    className="text-xs font-semibold text-emerald-700 hover:underline dark:text-emerald-400"
+                  >
+                    editar em Ajustes
+                  </Link>
+                </div>
+                {basicos.length === 0 ? (
+                  <p className="text-xs text-slate-400">
+                    Nenhum básico ainda — cadastre em Ajustes.
+                  </p>
+                ) : (
+                  <div className="flex flex-wrap gap-[7px]">
+                    {basicos.map((b) => (
+                      <span
+                        key={b}
+                        className="inline-flex items-center rounded-full border border-[#E7DECD] bg-[#F7F2E9] px-3 py-1.5 text-[13.5px] font-medium dark:border-slate-700 dark:bg-slate-800"
+                      >
+                        {b}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Extras desta semana */}
+              {extras.length > 0 && (
+                <div className="mb-3 flex flex-wrap gap-[7px]">
+                  {extras.map((ex, i) => (
+                    <span
+                      key={ex}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-[#E7DECD] bg-[#F7F2E9] px-3 py-1.5 text-[13.5px] font-medium dark:border-slate-700 dark:bg-slate-800"
+                    >
+                      {ex}
+                      <button
+                        type="button"
+                        onClick={() => removerExtra(i)}
+                        aria-label={"Remover " + ex}
+                        className="text-rose-600 hover:opacity-70"
+                      >
+                        ✕
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <div className="flex gap-2">
                 <input
                   type="text"
                   value={novoExtra}
@@ -767,74 +695,141 @@ export default function SemanaContent() {
                       adicionarExtra();
                     }
                   }}
-                  placeholder="Ex.: coentro, pimenta…"
-                  className="flex-1 rounded border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-800"
+                  placeholder="Ex.: coentro, páprica…"
+                  className="flex-1 rounded-xl border border-[#E2D7C4] bg-[#FCFAF5] px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-emerald-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                 />
                 <button
                   type="button"
                   onClick={adicionarExtra}
-                  className="shrink-0 rounded bg-emerald-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
+                  className="shrink-0 rounded-xl bg-[#EFE7D8] px-4 text-sm font-semibold text-slate-600 transition hover:brightness-95 dark:bg-slate-800 dark:text-slate-300"
                 >
-                  + Adicionar
+                  Adicionar
                 </button>
               </div>
-              {extras.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {extras.map((ex, i) => (
-                    <span
-                      key={ex}
-                      className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200"
-                    >
-                      {ex}
-                      <button
-                        type="button"
-                        onClick={() => removerExtra(i)}
-                        aria-label={"Remover " + ex}
-                        className="text-emerald-600 hover:text-emerald-900 dark:text-emerald-400"
-                      >
-                        ✕
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
+            </div>
+
+            {/* Anotações */}
+            <div className={cardCls}>
+              <label className="block text-sm font-semibold">
+                Anotações (temperos, dicas, etc.)
+              </label>
+              <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+                ⚠️ Temperos e aditivos não entram no cálculo de nutrição.
+              </p>
+              <textarea
+                value={notas}
+                onChange={(e) => setNotas(e.target.value)}
+                placeholder="Ex.: sal, alho, azeite..."
+                className="mt-2 w-full rounded-xl border border-[#E2D7C4] bg-[#FCFAF5] px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-emerald-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                rows={3}
+              />
             </div>
           </div>
 
-          {/* Notas de temperos */}
-          <div className="rounded-lg border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-            <label className="block text-sm font-medium">
-              Anotações (temperos, dicas, etc.)
-            </label>
-            <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
-              ⚠️ Temperos e aditivos não entram no cálculo de nutrição no MVP.
-            </p>
-            <textarea
-              value={notas}
-              onChange={(e) => setNotas(e.target.value)}
-              placeholder="Ex.: sal, alho, azeite..."
-              className="mt-2 w-full rounded border border-slate-300 bg-white px-3 py-2 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-800"
-              rows={3}
+          {/* ===================== COLUNA DIREITA (sticky) ===================== */}
+          <div className="flex flex-col gap-3.5 lg:sticky lg:top-[78px]">
+            {/* Lista de compras (total) */}
+            <ListaCompras
+              titulo={
+                (tituloSemana || "Minha semana") + (isShared ? " (Total)" : "")
+              }
+              itens={resumo ? buildShoppingList(resumo) : []}
+              complementos={complementos}
+              storageKey={semanaId ?? "nova"}
             />
-          </div>
 
-          {/* Ações: montar agora + salvar */}
-          {linhas.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setMontando(true)}
-                className="rounded border border-emerald-600 px-4 py-2 font-medium text-emerald-700 transition hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/30"
-              >
-                🍱 Montar agora
-              </button>
-              <button
-                onClick={() => setMostrando(true)}
-                className="rounded bg-emerald-600 px-4 py-2 font-medium text-white transition hover:bg-emerald-700"
-              >
-                💾 Salvar Semana
-              </button>
-            </div>
-          )}
+            {/* Nutrição da semana */}
+            {resumo && (
+              <div className={cardCls}>
+                <h2 className="mb-3.5 text-lg font-bold [font-family:var(--font-display)]">
+                  Nutrição da semana{isShared ? " — Total" : ""}
+                </h2>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div className="rounded-[13px] bg-[#F7F2E9] px-3.5 py-3 dark:bg-slate-800">
+                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                      Total kcal
+                    </p>
+                    <p className="mt-1 text-2xl font-bold [font-family:var(--font-display)]">
+                      {resumo.totalKcal.toFixed(0)}
+                    </p>
+                  </div>
+                  <div className="rounded-[13px] bg-[#F7EDE7] px-3.5 py-3 dark:bg-rose-950/20">
+                    <p className="text-xs font-semibold text-[#B06A4A] dark:text-rose-300">
+                      Total proteína
+                    </p>
+                    <p className="mt-1 text-2xl font-bold text-rose-500 [font-family:var(--font-display)]">
+                      {resumo.totalProtein.toFixed(0)} g
+                    </p>
+                  </div>
+                  <div className="rounded-[13px] bg-[#F7F2E9] px-3.5 py-3 dark:bg-slate-800">
+                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                      Carboidrato
+                    </p>
+                    <p className="mt-1 text-xl font-bold [font-family:var(--font-display)]">
+                      {resumo.totalCarb.toFixed(0)} g
+                    </p>
+                  </div>
+                  <div className="rounded-[13px] bg-[#F7F2E9] px-3.5 py-3 dark:bg-slate-800">
+                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                      Gordura
+                    </p>
+                    <p className="mt-1 text-xl font-bold [font-family:var(--font-display)]">
+                      {resumo.totalFat.toFixed(0)} g
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-3 border-t border-[#EFE7D8] pt-3 dark:border-slate-800">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-[0.04em] text-slate-500 dark:text-slate-400">
+                    Média por marmita
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    <span className="rounded-full bg-[#E9F0E7] px-2.5 py-1.5 text-[13px] font-bold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+                      {resumo.avgKcalPerMarmita.toFixed(0)} kcal
+                    </span>
+                    <span className="rounded-full bg-[#F7E7DE] px-2.5 py-1.5 text-[13px] font-bold text-rose-600 dark:bg-rose-950/30 dark:text-rose-300">
+                      {resumo.avgProteinPerMarmita.toFixed(0)} prot
+                    </span>
+                    <span className="rounded-full bg-[#F7F2E9] px-2.5 py-1.5 text-[13px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                      {resumo.avgCarbPerMarmita.toFixed(0)} carb
+                    </span>
+                    <span className="rounded-full bg-[#F7F2E9] px-2.5 py-1.5 text-[13px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                      {resumo.avgFatPerMarmita.toFixed(0)} gord
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Divisão por pessoa (conjunta) */}
+            {resumo && isShared && (
+              <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+                <ResumoPessoa titulo={meuNome} resumo={resumoEu} />
+                <ResumoPessoa
+                  titulo={person2Name || "Outra pessoa"}
+                  resumo={resumoP2}
+                />
+              </div>
+            )}
+
+            {/* Ações */}
+            {linhas.length > 0 && (
+              <div className="flex gap-2.5">
+                <button
+                  onClick={() => setMontando(true)}
+                  className="flex-1 rounded-[13px] border border-emerald-600 bg-white px-4 py-3 font-semibold text-emerald-700 transition hover:bg-[#E9F0E7] dark:bg-slate-900 dark:text-emerald-400 dark:hover:bg-emerald-950/30"
+                >
+                  🍱 Montar agora
+                </button>
+                <button
+                  onClick={() => setMostrando(true)}
+                  className="flex-1 rounded-[13px] bg-rose-500 px-4 py-3 font-semibold text-white transition hover:bg-rose-600"
+                >
+                  💾 Salvar
+                </button>
+              </div>
+            )}
+          </div>
 
           {montando && (
             <MontagemMarmitas
@@ -869,7 +864,7 @@ export default function SemanaContent() {
               }}
             />
           )}
-        </>
+        </div>
       )}
     </main>
   );

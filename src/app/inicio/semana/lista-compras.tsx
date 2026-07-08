@@ -142,14 +142,14 @@ export default function ListaCompras({
   }
 
   return (
-    <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-5 dark:border-emerald-900 dark:bg-emerald-950/20">
-      <div className="mb-3 flex items-start justify-between gap-3">
+    <div className="rounded-[20px] bg-emerald-700 p-5 text-white">
+      <div className="mb-3.5 flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-emerald-900 dark:text-emerald-100">
-            🛒 Lista de Compras
+          <h2 className="text-lg font-bold text-white [font-family:var(--font-display)]">
+            🛒 Lista de compras
           </h2>
           {total > 0 && (
-            <p className="mt-0.5 text-xs text-emerald-700 dark:text-emerald-300">
+            <p className="mt-0.5 text-xs text-emerald-100">
               {comprados}/{total} comprados
             </p>
           )}
@@ -158,63 +158,57 @@ export default function ListaCompras({
           <button
             type="button"
             onClick={compartilhar}
-            className="shrink-0 rounded bg-emerald-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
+            className="shrink-0 rounded-[9px] border border-white/35 bg-white/15 px-3 py-1.5 text-[12.5px] font-semibold text-white transition hover:bg-white/25"
           >
-            📤 Compartilhar
+            📤 Enviar
           </button>
         )}
       </div>
 
-      {aviso && (
-        <p className="mb-2 text-sm text-emerald-700 dark:text-emerald-300">
-          {aviso}
-        </p>
-      )}
+      {aviso && <p className="mb-2 text-sm text-emerald-100">{aviso}</p>}
 
       {total === 0 ? (
-        <p className="text-sm text-emerald-700 dark:text-emerald-300">
-          Nenhum alimento na lista ainda.
+        <p className="text-sm text-emerald-100">
+          Adicione alimentos para ver a lista.
         </p>
       ) : (
-        <div className="space-y-4">
+        <div className="flex flex-col gap-3">
           {grupos.map((g) => (
             <div key={g.key}>
-              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+              <p className="mb-1.5 text-[11.5px] font-bold uppercase tracking-[0.05em] text-[#BFD8C4]">
                 {g.emoji} {g.label}
               </p>
-              <div className="space-y-1">
+              <div>
                 {g.itens.map((it) => {
                   const feito = marcados.has(it.name);
                   return (
                     <label
                       key={it.name}
-                      className="flex cursor-pointer items-center gap-3 rounded px-1 py-1 text-sm hover:bg-emerald-100/60 dark:hover:bg-emerald-900/30"
+                      className="flex cursor-pointer items-center gap-2.5 border-b border-white/10 py-1"
                     >
                       <input
                         type="checkbox"
                         checked={feito}
                         onChange={() => toggle(it.name)}
-                        className="size-4 shrink-0 accent-emerald-600"
+                        className="size-4 shrink-0 accent-emerald-400"
                       />
                       <span
                         className={
-                          "flex-1 " +
-                          (feito
-                            ? "text-slate-400 line-through dark:text-slate-500"
-                            : "text-slate-700 dark:text-slate-300")
+                          "flex-1 text-[14.5px] " +
+                          (feito ? "text-emerald-200/60 line-through" : "")
                         }
                       >
                         {it.name}
                       </span>
                       <span
                         className={
-                          "font-semibold " +
+                          "whitespace-nowrap text-sm font-bold " +
                           (feito
-                            ? "text-slate-400 line-through dark:text-slate-500"
-                            : "text-emerald-700 dark:text-emerald-300")
+                            ? "text-emerald-200/50 line-through"
+                            : "text-[#F4E6C8]")
                         }
                       >
-                        {it.grams.toFixed(0)}g (CRU)
+                        {it.grams.toFixed(0)} g
                       </span>
                     </label>
                   );
@@ -225,32 +219,27 @@ export default function ListaCompras({
 
           {compl.length > 0 && (
             <div>
-              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
-                🧂 Complementos (temperos & básicos)
+              <p className="mb-1.5 text-[11.5px] font-bold uppercase tracking-[0.05em] text-[#BFD8C4]">
+                🧂 Complementos
               </p>
-              <p className="mb-1 text-xs text-slate-500 dark:text-slate-400">
-                Confira o que já tem em casa — não entram no cálculo de nutrição.
-              </p>
-              <div className="space-y-1">
+              <div>
                 {compl.map((c) => {
                   const feito = marcados.has(chaveCompl(c));
                   return (
                     <label
                       key={c}
-                      className="flex cursor-pointer items-center gap-3 rounded px-1 py-1 text-sm hover:bg-emerald-100/60 dark:hover:bg-emerald-900/30"
+                      className="flex cursor-pointer items-center gap-2.5 border-b border-white/10 py-1"
                     >
                       <input
                         type="checkbox"
                         checked={feito}
                         onChange={() => toggle(chaveCompl(c))}
-                        className="size-4 shrink-0 accent-emerald-600"
+                        className="size-4 shrink-0 accent-emerald-400"
                       />
                       <span
                         className={
-                          "flex-1 " +
-                          (feito
-                            ? "text-slate-400 line-through dark:text-slate-500"
-                            : "text-slate-700 dark:text-slate-300")
+                          "flex-1 text-[14.5px] " +
+                          (feito ? "text-emerald-200/60 line-through" : "")
                         }
                       >
                         {c}
