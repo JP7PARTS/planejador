@@ -12,7 +12,8 @@ const etapas = [
   { n: 9, titulo: "Semana conjunta", desc: "Dividir uma semana entre duas pessoas.", pronto: true },
   { n: 10, titulo: "Semana do casal", desc: "Aparecer nas duas contas quando vinculadas.", pronto: true },
   { n: 11, titulo: "Ver semana do casal", desc: "Visualizar e adicionar alimentos faltantes.", pronto: true },
-  { n: 12, titulo: "Ajuste mobile", desc: "Deixar tudo redondo no celular.", pronto: false },
+  { n: 12, titulo: "Busca e edição", desc: "Buscar alimento e atualizar semana salva.", pronto: true },
+  { n: 13, titulo: "Ajuste mobile", desc: "Deixar tudo redondo no celular.", pronto: true },
 ];
 
 export default function Home() {
@@ -73,7 +74,8 @@ export default function Home() {
       </section>
 
       <footer className="mt-auto pt-10 text-center text-xs text-slate-400">
-        Etapas 1-11 concluídas — você pode visualizar as semanas do seu casal! 🚀
+        Todas as etapas concluídas — busca de alimento, edição de semanas e ajuste
+        para celular! 🚀
       </footer>
     </main>
   );

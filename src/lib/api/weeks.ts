@@ -148,6 +148,22 @@ export async function addWeekItem(
   return res.json();
 }
 
+// Substitui todos os itens da semana de uma vez (usado ao "Atualizar semana").
+export async function replaceWeekItems(
+  weekId: string,
+  items: WeekItemData[]
+): Promise<void> {
+  const res = await fetch(`/api/weeks/${weekId}/items`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ items }),
+  });
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.error || "Erro ao atualizar itens");
+  }
+}
+
 export async function deleteWeekItem(weekId: string, itemId: string): Promise<void> {
   const res = await fetch(`/api/weeks/${weekId}/items/${itemId}`, {
     method: "DELETE",

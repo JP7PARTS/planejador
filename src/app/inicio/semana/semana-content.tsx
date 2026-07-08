@@ -14,6 +14,7 @@ import { getWeek } from "@/lib/api/weeks";
 import { getHouseholdSummary } from "@/lib/api/household";
 import SemanaSalvaModal from "./semana-salva";
 import ResumoPessoa from "./resumo-pessoa";
+import AlimentoSelect from "./alimento-select";
 import Link from "next/link";
 
 export default function SemanaContent() {
@@ -27,6 +28,7 @@ export default function SemanaContent() {
   const [numMarmitas, setNumMarmitas] = useState(7);
   const [linhas, setLinhas] = useState<WeekItem[]>([]);
   const [notas, setNotas] = useState("");
+  const [tituloSemana, setTituloSemana] = useState("");
   const [resumo, setResumo] = useState<WeekSummary | null>(null);
   const [mostrando, setMostrando] = useState<boolean>(false);
 
@@ -87,6 +89,7 @@ export default function SemanaContent() {
       // Se houver semanaId, carrega a semana
       if (semanaId) {
         const weekData = await getWeek(semanaId);
+        setTituloSemana(weekData.week.title || "");
         setNumMarmitas(weekData.week.num_marmitas);
         setNotas(weekData.week.notes || "");
         setIsShared(weekData.week.is_shared ?? false);
@@ -324,32 +327,40 @@ export default function SemanaContent() {
                       key={idx}
                       className="space-y-2 rounded border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800"
                     >
-                      <div
-                        className={
-                          "grid grid-cols-1 gap-3 sm:items-end " +
-                          (isShared ? "sm:grid-cols-5" : "sm:grid-cols-4")
-                        }
-                      >
-                        <div>
+                      {/* Alimento (busca) + botão remover no topo */}
+                      <div className="flex items-start gap-2">
+                        <div className="flex-1">
                           <label className="block text-xs font-medium">
                             Alimento
                           </label>
-                          <select
-                            value={linha.foodId}
-                            onChange={(e) =>
-                              atualizarLinha(idx, { foodId: e.target.value })
-                            }
-                            className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-800"
-                          >
-                            <option value="">Selecionar...</option>
-                            {alimentos.map((f) => (
-                              <option key={f.id} value={f.id}>
-                                {f.name}
-                              </option>
-                            ))}
-                          </select>
+                          <div className="mt-1">
+                            <AlimentoSelect
+                              alimentos={alimentos}
+                              value={linha.foodId}
+                              onChange={(foodId) =>
+                                atualizarLinha(idx, { foodId })
+                              }
+                            />
+                          </div>
                         </div>
+                        <button
+                          onClick={() => removerLinha(idx)}
+                          title="Remover alimento"
+                          aria-label="Remover alimento"
+                          className="mt-5 shrink-0 rounded px-2 py-1.5 text-sm font-medium text-red-600 transition hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-950"
+                        >
+                          🗑️
+                        </button>
+                      </div>
 
+                      {/* g/marmita, nº marmitas e pessoa lado a lado (2 col no
+                          celular, distribuídos no desktop) */}
+                      <div
+                        className={
+                          "grid grid-cols-2 gap-3 " +
+                          (isShared ? "sm:grid-cols-3" : "sm:grid-cols-2")
+                        }
+                      >
                         <div>
                           <label className="block text-xs font-medium">
                             g cozido/marmita
@@ -387,7 +398,7 @@ export default function SemanaContent() {
                         </div>
 
                         {isShared && (
-                          <div>
+                          <div className="col-span-2 sm:col-span-1">
                             <label className="block text-xs font-medium">
                               Pessoa
                             </label>
@@ -405,13 +416,6 @@ export default function SemanaContent() {
                             </select>
                           </div>
                         )}
-
-                        <button
-                          onClick={() => removerLinha(idx)}
-                          className="rounded px-2 py-1.5 text-sm font-medium text-red-600 transition hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-950"
-                        >
-                          Remover
-                        </button>
                       </div>
 
                       {resultado && (
@@ -599,6 +603,8 @@ export default function SemanaContent() {
 
           {mostrando && (
             <SemanaSalvaModal
+              semanaId={semanaId}
+              tituloInicial={tituloSemana}
               linhas={linhas}
               numMarmitas={numMarmitas}
               notas={notas}
@@ -611,6 +617,7 @@ export default function SemanaContent() {
                 // Limpa o formulário após salvar com sucesso
                 setLinhas([]);
                 setNotas("");
+                setTituloSemana("");
                 setNumMarmitas(7);
                 setIsShared(false);
                 setPerson2Name("Namorada");

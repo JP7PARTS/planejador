@@ -132,14 +132,6 @@ export default async function InicioPage() {
           </div>
         )}
 
-        <div className="rounded-xl border border-dashed border-slate-300 p-5 text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
-          <p className="font-medium text-slate-600 dark:text-slate-300">
-            Próximas etapas
-          </p>
-          <ul className="mt-2 space-y-1 text-sm">
-            <li>• Ajuste mobile (responsive)</li>
-          </ul>
-        </div>
       </section>
     </main>
   );
