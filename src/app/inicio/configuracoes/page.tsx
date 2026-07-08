@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { linkHousehold, unlinkHousehold } from "@/lib/api/household";
-import Link from "next/link";
 
 interface Profile {
   id: string;
@@ -142,12 +141,6 @@ export default function ConfiguracoesPage() {
             Gerencie seu perfil e compartilhamento com o casal
           </p>
         </div>
-        <Link
-          href="/inicio"
-          className="rounded bg-slate-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-700"
-        >
-          ← Voltar
-        </Link>
       </header>
 
       {erro && (
