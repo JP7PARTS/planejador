@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import Link from "next/link";
 import { Food } from "@/lib/types";
 import { createClient } from "@/lib/supabase/client";
 import { getWeekFull, WeekFull } from "@/lib/api/weeks";
@@ -196,12 +195,6 @@ export default function VerSemanaPage() {
               🍱 Montar agora
             </button>
           )}
-          <Link
-            href="/inicio/semanas"
-            className="rounded bg-slate-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-700"
-          >
-            ← Voltar
-          </Link>
         </div>
       </header>
 

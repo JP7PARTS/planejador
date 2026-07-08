@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from "react";
 import { Food } from "@/lib/types";
 import AlimentosList from "./alimentos-list";
 import { createClient } from "@/lib/supabase/client";
-import Link from "next/link";
 
 export default function AlimentosPage() {
   const [alimentos, setAlimentos] = useState<Food[]>([]);
@@ -45,12 +44,6 @@ export default function AlimentosPage() {
             {alimentos.length} alimentos
           </p>
         </div>
-        <Link
-          href="/inicio"
-          className="rounded bg-slate-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-700"
-        >
-          ← Voltar
-        </Link>
       </header>
 
       {erro && (
