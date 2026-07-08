@@ -36,24 +36,17 @@ export default function AlimentosPage() {
   }, [carregarAlimentos]);
 
   return (
-    <main className="mx-auto flex max-w-4xl flex-col gap-6 px-5 py-6">
-      <header className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Banco de Alimentos</h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            {alimentos.length} alimentos
-          </p>
-        </div>
-      </header>
-
+    <main className="mx-auto flex max-w-5xl flex-col gap-6 px-5 py-8 sm:py-10">
       {erro && (
-        <div className="rounded-lg bg-red-500/10 p-4 text-sm text-red-600 dark:text-red-400">
+        <div className="rounded-xl bg-red-500/10 p-4 text-sm text-red-600 dark:text-red-400">
           {erro}
         </div>
       )}
 
       {carregando ? (
-        <p className="text-center text-slate-500 dark:text-slate-400">Carregando…</p>
+        <p className="text-center text-slate-500 dark:text-slate-400">
+          Carregando…
+        </p>
       ) : (
         <AlimentosList alimentos={alimentos} onRefresh={carregarAlimentos} />
       )}

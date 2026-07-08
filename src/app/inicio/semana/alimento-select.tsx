@@ -94,8 +94,8 @@ export default function AlimentoSelect({ alimentos, value, onChange }: Props) {
         onChange={(e) => aoDigitar(e.target.value)}
         onFocus={() => setAberto(true)}
         onKeyDown={aoTeclar}
-        placeholder="Buscar alimento…"
-        className="w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-800"
+        placeholder="Escolha um alimento…"
+        className="w-full rounded-[10px] border border-[#E2D7C4] bg-white px-3 py-2.5 text-[14.5px] font-semibold text-slate-900 outline-none transition focus:border-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
       />
 
       {aberto && (
