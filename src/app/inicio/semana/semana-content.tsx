@@ -51,6 +51,11 @@ export default function SemanaContent() {
   // Nome de quem está montando (pessoa 1) — usado nos rótulos no lugar de "Eu".
   const [meuNome, setMeuNome] = useState("Eu");
 
+  // Complementos (temperos & básicos): base pessoal + extras desta semana.
+  const [basicos, setBasicos] = useState<string[]>([]);
+  const [extras, setExtras] = useState<string[]>([]);
+  const [novoExtra, setNovoExtra] = useState("");
+
   // Semana conjunta (dividida entre você e outra pessoa)
   const [isShared, setIsShared] = useState(false);
   const [person2Name, setPerson2Name] = useState("Namorada");
@@ -104,6 +109,14 @@ export default function SemanaContent() {
           "Eu";
         setMeuNome(nome);
 
+        // Lista pessoal de básicos (temperos que aparecem em toda semana).
+        const { data: perfil } = await supabase
+          .from("profiles")
+          .select("staples")
+          .eq("id", user.id)
+          .single();
+        if (perfil?.staples) setBasicos(perfil.staples as string[]);
+
         const summary = await getHouseholdSummary();
         const parceira = summary.users.find((u) => u.id !== user.id);
         if (parceira) {
@@ -147,6 +160,7 @@ export default function SemanaContent() {
         setIsShared(weekData.week.is_shared ?? false);
         setPerson2Name(weekData.week.person2_name || "Namorada");
         setNumMarmitasP2(weekData.week.num_marmitas_p2 || 7);
+        setExtras(weekData.week.extras || []);
 
         // Agrupa os itens por alimento: pessoa 1 preenche p1*, pessoa 2 p2*.
         // Itens extras do mesmo alimento/pessoa (raro) viram novas linhas.
@@ -243,6 +257,23 @@ export default function SemanaContent() {
     novasLinhas[index] = { ...novasLinhas[index], ...updates };
     setRows(novasLinhas);
   }
+
+  function adicionarExtra() {
+    const v = novoExtra.trim();
+    if (!v) return;
+    const jaExiste = extras.some(
+      (e) => e.trim().toLowerCase() === v.toLowerCase()
+    );
+    if (!jaExiste) setExtras([...extras, v]);
+    setNovoExtra("");
+  }
+
+  function removerExtra(index: number) {
+    setExtras(extras.filter((_, i) => i !== index));
+  }
+
+  // Complementos que aparecem na lista de compras = base pessoal + extras.
+  const complementos = [...basicos, ...extras];
 
   return (
     <main className="mx-auto flex max-w-4xl flex-col gap-6 px-5 py-6">
@@ -570,6 +601,7 @@ export default function SemanaContent() {
                   (tituloSemana || "Minha semana") + (isShared ? " (Total)" : "")
                 }
                 itens={buildShoppingList(resumo)}
+                complementos={complementos}
                 storageKey={semanaId ?? "nova"}
               />
 
@@ -659,6 +691,98 @@ export default function SemanaContent() {
             </>
           )}
 
+          {/* Complementos (temperos & básicos) */}
+          <div className="rounded-lg border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+            <h2 className="text-lg font-semibold">
+              🧂 Complementos (temperos & básicos)
+            </h2>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              Itens pra conferir na despensa (não entram no cálculo). Aparecem na
+              lista de compras com checkbox.
+            </p>
+
+            {/* Base pessoal (aparece em toda semana) */}
+            <div className="mt-3">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                  Seus básicos (todas as semanas)
+                </p>
+                <Link
+                  href="/inicio/configuracoes"
+                  className="text-xs font-medium text-emerald-700 hover:underline dark:text-emerald-400"
+                >
+                  editar em Configurações
+                </Link>
+              </div>
+              {basicos.length === 0 ? (
+                <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+                  Nenhum básico cadastrado ainda. Cadastre sal, alho, azeite… em
+                  Configurações.
+                </p>
+              ) : (
+                <div className="mt-1 flex flex-wrap gap-1.5">
+                  {basicos.map((b) => (
+                    <span
+                      key={b}
+                      className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                    >
+                      {b}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Extras só desta semana */}
+            <div className="mt-4">
+              <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                Extras desta semana
+              </p>
+              <div className="mt-1 flex gap-2">
+                <input
+                  type="text"
+                  value={novoExtra}
+                  onChange={(e) => setNovoExtra(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      adicionarExtra();
+                    }
+                  }}
+                  placeholder="Ex.: coentro, pimenta…"
+                  className="flex-1 rounded border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-800"
+                />
+                <button
+                  type="button"
+                  onClick={adicionarExtra}
+                  className="shrink-0 rounded bg-emerald-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
+                >
+                  + Adicionar
+                </button>
+              </div>
+              {extras.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {extras.map((ex, i) => (
+                    <span
+                      key={ex}
+                      className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200"
+                    >
+                      {ex}
+                      <button
+                        type="button"
+                        onClick={() => removerExtra(i)}
+                        aria-label={"Remover " + ex}
+                        className="text-emerald-600 hover:text-emerald-900 dark:text-emerald-400"
+                      >
+                        ✕
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Notas de temperos */}
           <div className="rounded-lg border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
             <label className="block text-sm font-medium">
@@ -693,6 +817,7 @@ export default function SemanaContent() {
               linhas={linhas}
               numMarmitas={numMarmitas}
               notas={notas}
+              extras={extras}
               isShared={isShared}
               person2Name={person2Name}
               numMarmitasP2={numMarmitasP2}
@@ -702,6 +827,7 @@ export default function SemanaContent() {
                 // Limpa o formulário após salvar com sucesso
                 setRows([]);
                 setNotas("");
+                setExtras([]);
                 setTituloSemana("");
                 setNumMarmitas(7);
                 setIsShared(false);

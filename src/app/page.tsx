@@ -15,6 +15,7 @@ const etapas = [
   { n: 12, titulo: "Busca e edição", desc: "Buscar alimento e atualizar semana salva.", pronto: true },
   { n: 13, titulo: "Ajuste mobile", desc: "Deixar tudo redondo no celular.", pronto: true },
   { n: 14, titulo: "Lista de compras", desc: "Agrupada por categoria, com compartilhar e checklist.", pronto: true },
+  { n: 15, titulo: "Complementos", desc: "Temperos e básicos pra conferir na despensa.", pronto: true },
 ];
 
 export default function Home() {

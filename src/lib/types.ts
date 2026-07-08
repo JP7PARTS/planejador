@@ -24,6 +24,7 @@ export interface Week {
   person2_name: string | null;
   num_marmitas_p2: number;
   household_id: string | null;
+  extras: string[];
   created_at: string;
   updated_at: string;
 }

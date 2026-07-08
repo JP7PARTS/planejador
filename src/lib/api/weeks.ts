@@ -7,6 +7,7 @@ export interface WeekData {
   is_shared?: boolean;
   person2_name?: string | null;
   num_marmitas_p2?: number;
+  extras?: string[];
 }
 
 export interface WeekItemData {
@@ -57,6 +58,7 @@ export interface WeekFull {
     is_shared: boolean;
     person2_name: string | null;
     user_id: string;
+    extras: string[];
   };
   owner_name: string;
   items: WeekFullItem[];

@@ -68,6 +68,7 @@ export async function POST(
         person2_name: originalWeek.person2_name ?? null,
         num_marmitas_p2: originalWeek.num_marmitas_p2 ?? 0,
         household_id: householdId,
+        extras: originalWeek.extras ?? [],
       })
       .select()
       .single();

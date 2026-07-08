@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Food } from "@/lib/types";
+import { createClient } from "@/lib/supabase/client";
 import { getWeekFull, WeekFull } from "@/lib/api/weeks";
 import { createFood } from "@/lib/api/foods";
 import {
@@ -26,6 +27,28 @@ export default function VerSemanaPage() {
   const [erro, setErro] = useState<string | null>(null);
   const [adicionando, setAdicionando] = useState(false);
   const [sucesso, setSucesso] = useState<string | null>(null);
+  // Básicos do próprio leitor (cada um confere a sua despensa).
+  const [basicos, setBasicos] = useState<string[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) return;
+        const { data: perfil } = await supabase
+          .from("profiles")
+          .select("staples")
+          .eq("id", user.id)
+          .single();
+        if (perfil?.staples) setBasicos(perfil.staples as string[]);
+      } catch {
+        // sem básicos: segue só com os extras da semana
+      }
+    })();
+  }, []);
 
   const carregar = useCallback(async () => {
     try {
@@ -205,6 +228,7 @@ export default function VerSemanaPage() {
                   (dados.week.title || "Semana") + (isShared ? " (Total)" : "")
                 }
                 itens={buildShoppingList(resumo)}
+                complementos={[...basicos, ...(dados.week.extras || [])]}
                 storageKey={"ver-" + id}
               />
 

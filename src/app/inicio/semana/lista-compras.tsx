@@ -17,9 +17,25 @@ interface Props {
   titulo: string;
   itens: ShoppingListItem[];
   storageKey: string;
+  // Temperos/básicos que não entram no cálculo (base pessoal + extras da semana).
+  complementos?: string[];
 }
 
-export default function ListaCompras({ titulo, itens, storageKey }: Props) {
+// Normaliza para dedupe e comparação (sem acento, minúsculo, sem espaços nas pontas).
+function normalizar(s: string): string {
+  return s
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+export default function ListaCompras({
+  titulo,
+  itens,
+  storageKey,
+  complementos,
+}: Props) {
   const chave = "lista-compras:" + storageKey;
   const [marcados, setMarcados] = useState<Set<string>>(new Set());
   const [aviso, setAviso] = useState<string | null>(null);
@@ -63,8 +79,26 @@ export default function ListaCompras({ titulo, itens, storageKey }: Props) {
       .sort((a, b) => b.grams - a.grams),
   })).filter((g) => g.itens.length > 0);
 
-  const total = itens.length;
-  const comprados = itens.filter((it) => marcados.has(it.name)).length;
+  // Complementos: dedupe (normalizado) e esconde o que já está na lista
+  // calculada (mesmo nome) para não duplicar. Preserva o texto original.
+  const nomesCalculados = new Set(itens.map((it) => normalizar(it.name)));
+  const compl: string[] = [];
+  const vistos = new Set<string>();
+  (complementos ?? []).forEach((c) => {
+    const n = normalizar(c);
+    if (!n || vistos.has(n) || nomesCalculados.has(n)) return;
+    vistos.add(n);
+    compl.push(c.trim());
+  });
+
+  // Chave de marcação dos complementos com prefixo, para não colidir com
+  // nomes de alimentos.
+  const chaveCompl = (c: string) => "+" + c;
+
+  const total = itens.length + compl.length;
+  const comprados =
+    itens.filter((it) => marcados.has(it.name)).length +
+    compl.filter((c) => marcados.has(chaveCompl(c))).length;
 
   // Texto para compartilhar/copiar.
   function montarTexto(): string {
@@ -76,6 +110,11 @@ export default function ListaCompras({ titulo, itens, storageKey }: Props) {
       });
       linhas.push("");
     });
+    if (compl.length > 0) {
+      linhas.push("🧂 Complementos (temperos & básicos)");
+      compl.forEach((c) => linhas.push(`- ${c}`));
+      linhas.push("");
+    }
     return linhas.join("\n").trim();
   }
 
@@ -183,6 +222,45 @@ export default function ListaCompras({ titulo, itens, storageKey }: Props) {
               </div>
             </div>
           ))}
+
+          {compl.length > 0 && (
+            <div>
+              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+                🧂 Complementos (temperos & básicos)
+              </p>
+              <p className="mb-1 text-xs text-slate-500 dark:text-slate-400">
+                Confira o que já tem em casa — não entram no cálculo de nutrição.
+              </p>
+              <div className="space-y-1">
+                {compl.map((c) => {
+                  const feito = marcados.has(chaveCompl(c));
+                  return (
+                    <label
+                      key={c}
+                      className="flex cursor-pointer items-center gap-3 rounded px-1 py-1 text-sm hover:bg-emerald-100/60 dark:hover:bg-emerald-900/30"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={feito}
+                        onChange={() => toggle(chaveCompl(c))}
+                        className="size-4 shrink-0 accent-emerald-600"
+                      />
+                      <span
+                        className={
+                          "flex-1 " +
+                          (feito
+                            ? "text-slate-400 line-through dark:text-slate-500"
+                            : "text-slate-700 dark:text-slate-300")
+                        }
+                      >
+                        {c}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -17,6 +17,7 @@ interface Props {
   linhas: WeekItem[];
   numMarmitas: number;
   notas: string;
+  extras: string[];
   isShared: boolean;
   person2Name: string;
   numMarmitasP2: number;
@@ -30,6 +31,7 @@ export default function SemanaSalvaModal({
   linhas,
   numMarmitas,
   notas,
+  extras,
   isShared,
   person2Name,
   numMarmitasP2,
@@ -79,6 +81,7 @@ export default function SemanaSalvaModal({
         is_shared: isShared,
         person2_name: isShared ? person2Name.trim() || null : null,
         num_marmitas_p2: isShared ? numMarmitasP2 : 0,
+        extras,
       });
 
       for (const item of itensParaSalvar()) {
@@ -109,6 +112,7 @@ export default function SemanaSalvaModal({
         is_shared: isShared,
         person2_name: isShared ? person2Name.trim() || null : null,
         num_marmitas_p2: isShared ? numMarmitasP2 : 0,
+        extras,
       });
       await replaceWeekItems(semanaId, itensParaSalvar());
 
