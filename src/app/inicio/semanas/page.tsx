@@ -44,7 +44,7 @@ export default function SemanasPage() {
       try {
         const summary = await getHouseholdSummary();
         const mapa: Record<string, string> = {};
-        summary.users.forEach((u) => {
+        summary.members.forEach((u) => {
           mapa[u.id] = u.name;
         });
         setNomesPorId(mapa);

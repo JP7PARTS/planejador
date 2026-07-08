@@ -15,6 +15,7 @@ import {
 } from "@/lib/calc";
 import ResumoPessoa from "../../resumo-pessoa";
 import ListaCompras from "../../lista-compras";
+import MontagemMarmitas, { PessoaMontagem } from "../../montagem";
 
 type Categoria = Food["category"];
 
@@ -27,6 +28,7 @@ export default function VerSemanaPage() {
   const [erro, setErro] = useState<string | null>(null);
   const [adicionando, setAdicionando] = useState(false);
   const [sucesso, setSucesso] = useState<string | null>(null);
+  const [montando, setMontando] = useState(false);
   // Básicos do próprio leitor (cada um confere a sua despensa).
   const [basicos, setBasicos] = useState<string[]>([]);
 
@@ -113,6 +115,28 @@ export default function VerSemanaPage() {
     }
   }
 
+  // Pessoas para a "montagem das marmitas" (nomes reais: dono + parceira).
+  const pessoasMontagem: PessoaMontagem[] = isShared
+    ? [
+        {
+          nome: dados?.owner_name || "Você",
+          numMarmitas,
+          itens: resumoEu?.items ?? [],
+        },
+        {
+          nome: dados?.week.person2_name || "Outra pessoa",
+          numMarmitas: numMarmitasP2,
+          itens: resumoP2?.items ?? [],
+        },
+      ]
+    : [
+        {
+          nome: dados?.owner_name || "Você",
+          numMarmitas,
+          itens: resumo?.items ?? [],
+        },
+      ];
+
   // Alimentos que faltam na conta de quem está vendo (sem duplicar por nome).
   const faltantesMap = new Map<
     string,
@@ -163,13 +187,30 @@ export default function VerSemanaPage() {
             </p>
           )}
         </div>
-        <Link
-          href="/inicio/semanas"
-          className="rounded bg-slate-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-700"
-        >
-          ← Voltar
-        </Link>
+        <div className="flex gap-2">
+          {resumo && (
+            <button
+              onClick={() => setMontando(true)}
+              className="rounded border border-emerald-600 px-3 py-2 text-sm font-medium text-emerald-700 transition hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/30"
+            >
+              🍱 Montar agora
+            </button>
+          )}
+          <Link
+            href="/inicio/semanas"
+            className="rounded bg-slate-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-700"
+          >
+            ← Voltar
+          </Link>
+        </div>
       </header>
+
+      {montando && (
+        <MontagemMarmitas
+          pessoas={pessoasMontagem}
+          onClose={() => setMontando(false)}
+        />
+      )}
 
       {erro && (
         <div className="rounded-lg bg-red-500/10 p-4 text-sm text-red-600 dark:text-red-400">

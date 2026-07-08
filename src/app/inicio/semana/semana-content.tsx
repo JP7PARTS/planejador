@@ -18,6 +18,7 @@ import SemanaSalvaModal from "./semana-salva";
 import ResumoPessoa from "./resumo-pessoa";
 import ListaCompras from "./lista-compras";
 import AlimentoSelect from "./alimento-select";
+import MontagemMarmitas, { PessoaMontagem } from "./montagem";
 import Link from "next/link";
 
 // Uma linha da UI = um alimento com os dados das duas pessoas (na semana
@@ -47,6 +48,7 @@ export default function SemanaContent() {
   const [tituloSemana, setTituloSemana] = useState("");
   const [resumo, setResumo] = useState<WeekSummary | null>(null);
   const [mostrando, setMostrando] = useState<boolean>(false);
+  const [montando, setMontando] = useState<boolean>(false);
 
   // Nome de quem está montando (pessoa 1) — usado nos rótulos no lugar de "Eu".
   const [meuNome, setMeuNome] = useState("Eu");
@@ -118,7 +120,7 @@ export default function SemanaContent() {
         if (perfil?.staples) setBasicos(perfil.staples as string[]);
 
         const summary = await getHouseholdSummary();
-        const parceira = summary.users.find((u) => u.id !== user.id);
+        const parceira = summary.members.find((u) => u.id !== user.id);
         if (parceira) {
           setLinked(true);
           setPartnerName(parceira.name);
@@ -274,6 +276,30 @@ export default function SemanaContent() {
 
   // Complementos que aparecem na lista de compras = base pessoal + extras.
   const complementos = [...basicos, ...extras];
+
+  // Pessoas para a "montagem das marmitas": conjunta = duas pessoas (cada uma
+  // com seus itens/marmitas); normal = só quem monta. Reusa os resumos já
+  // calculados (WeekItemResult tem gramas cozidas/marmita e nº de marmitas).
+  const pessoasMontagem: PessoaMontagem[] = isShared
+    ? [
+        {
+          nome: meuNome,
+          numMarmitas,
+          itens: resumoEu?.items ?? [],
+        },
+        {
+          nome: person2Name || "Outra pessoa",
+          numMarmitas: numMarmitasP2,
+          itens: resumoP2?.items ?? [],
+        },
+      ]
+    : [
+        {
+          nome: meuNome,
+          numMarmitas,
+          itens: resumo?.items ?? [],
+        },
+      ];
 
   return (
     <main className="mx-auto flex max-w-4xl flex-col gap-6 px-5 py-6">
@@ -800,14 +826,29 @@ export default function SemanaContent() {
             />
           </div>
 
-          {/* Botão Salvar Semana */}
+          {/* Ações: montar agora + salvar */}
           {linhas.length > 0 && (
-            <button
-              onClick={() => setMostrando(true)}
-              className="rounded bg-emerald-600 px-4 py-2 font-medium text-white transition hover:bg-emerald-700"
-            >
-              💾 Salvar Semana
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setMontando(true)}
+                className="rounded border border-emerald-600 px-4 py-2 font-medium text-emerald-700 transition hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/30"
+              >
+                🍱 Montar agora
+              </button>
+              <button
+                onClick={() => setMostrando(true)}
+                className="rounded bg-emerald-600 px-4 py-2 font-medium text-white transition hover:bg-emerald-700"
+              >
+                💾 Salvar Semana
+              </button>
+            </div>
+          )}
+
+          {montando && (
+            <MontagemMarmitas
+              pessoas={pessoasMontagem}
+              onClose={() => setMontando(false)}
+            />
           )}
 
           {mostrando && (

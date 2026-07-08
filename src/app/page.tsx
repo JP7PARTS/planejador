@@ -16,6 +16,8 @@ const etapas = [
   { n: 13, titulo: "Ajuste mobile", desc: "Deixar tudo redondo no celular.", pronto: true },
   { n: 14, titulo: "Lista de compras", desc: "Agrupada por categoria, com compartilhar e checklist.", pronto: true },
   { n: 15, titulo: "Complementos", desc: "Temperos e básicos pra conferir na despensa.", pronto: true },
+  { n: 16, titulo: "Montagem das marmitas", desc: "Quanto de cada alimento vai em cada pote, por pessoa.", pronto: true },
+  { n: 17, titulo: "Totais do casal por período", desc: "Filtrar por data e ver junto e separado.", pronto: true },
 ];
 
 export default function Home() {

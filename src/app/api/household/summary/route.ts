@@ -1,11 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
-import { calculateWeekSummary, WeekItem } from "@/lib/calc";
 import { Food } from "@/lib/types";
 
+// Linha crua vinda da RPC get_household_data (já enriquecida na migração 0010).
 interface HouseholdItemRow {
   food_id: string;
   food_name: string;
+  category: Food["category"];
   fc: number;
   kcal_per_100g: number;
   protein_g_per_100g: number;
@@ -13,6 +14,10 @@ interface HouseholdItemRow {
   fat_g_per_100g: number;
   cooked_grams_per_marmita: number;
   num_marmitas: number;
+  owner_id: string;
+  week_id: string;
+  week_num_marmitas: number;
+  week_created_at: string;
 }
 
 interface HouseholdData {
@@ -32,9 +37,9 @@ export async function GET() {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
-    // Função no banco (security definer): agrega membros, items e total de
-    // marmitas de quem consentiu no mesmo household. Retorna null se o
-    // usuário atual não ativou o compartilhamento.
+    // Função no banco (security definer): agrega membros e items (com
+    // categoria, dono e data da semana) de quem consentiu no mesmo household.
+    // Retorna null se o usuário atual não ativou o compartilhamento.
     const { data, error } = await supabase.rpc("get_household_data");
 
     if (error) {
@@ -53,45 +58,14 @@ export async function GET() {
 
     const household = data as HouseholdData;
 
-    // Monta o mapa de alimentos a partir das linhas retornadas.
-    const foodsMap: Record<string, Food> = {};
-    household.items.forEach((row) => {
-      foodsMap[row.food_id] = {
-        id: row.food_id,
-        name: row.food_name,
-        fc: row.fc,
-        kcal_per_100g: row.kcal_per_100g,
-        protein_g_per_100g: row.protein_g_per_100g,
-        carb_g_per_100g: row.carb_g_per_100g,
-        fat_g_per_100g: row.fat_g_per_100g,
-      } as Food;
-    });
-
-    const weekItems: WeekItem[] = household.items.map((row) => ({
-      foodId: row.food_id,
-      cookedGramsPerMarmita: row.cooked_grams_per_marmita,
-      numMarmitas: row.num_marmitas,
-    }));
-
-    const totalMarmitas = household.total_marmitas;
-
-    const summary = calculateWeekSummary(
-      weekItems,
-      foodsMap,
-      totalMarmitas || 1
-    );
-
+    // Repassa os itens crus + membros; o filtro por período e os agregados
+    // (junto e por pessoa) são feitos no cliente (consolidacao/page.tsx).
     return NextResponse.json({
-      totalKcal: summary.totalKcal,
-      totalProtein: summary.totalProtein,
-      totalCarb: summary.totalCarb,
-      totalFat: summary.totalFat,
-      totalRawPerFood: summary.totalRawPerFood,
-      numMarmitas: totalMarmitas,
-      users: household.members.map((m) => ({
+      members: household.members.map((m) => ({
         id: m.id,
         name: m.name || "Sem nome",
       })),
+      items: household.items || [],
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Erro interno";
