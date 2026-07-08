@@ -1,21 +1,180 @@
 @import "tailwindcss";
 
-:root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
-}
+/* ------------------------------------------------------------------ *
+ * Planejador de Marmitas — tema "caseiro & apetitoso"
+ * Reskin global: remapeia a paleta padrão do Tailwind e as fontes.
+ * Todas as telas herdam este visual sem precisar mudar classes.
+ * ------------------------------------------------------------------ */
 
 @theme inline {
+  --font-sans: var(--font-hanken), system-ui, -apple-system, "Segoe UI", Roboto,
+    sans-serif;
+  --font-display: var(--font-bricolage), var(--font-hanken), sans-serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial,
-    sans-serif;
+}
+
+@theme {
+  /* Cantos mais arredondados e sombras mais suaves em todo o app */
+  --radius-md: 0.6rem;
+  --radius-lg: 0.85rem;
+  --radius-xl: 1.05rem;
+  --radius-2xl: 1.3rem;
+  --radius-3xl: 1.6rem;
+
+  /* ---- Neutros quentes (remapeia toda a escala slate) ---- */
+  --color-slate-50: #fbf7f0;
+  --color-slate-100: #f4ede1;
+  --color-slate-200: #e7decd;
+  --color-slate-300: #d6cab3;
+  --color-slate-400: #a79b86;
+  --color-slate-500: #8a8172;
+  --color-slate-600: #6b6357;
+  --color-slate-700: #4e483e;
+  --color-slate-800: #332e27;
+  --color-slate-900: #26221c;
+  --color-slate-950: #191612;
+
+  /* Mantém gray/zinc/neutral alinhados aos mesmos neutros quentes */
+  --color-gray-50: #fbf7f0;
+  --color-gray-100: #f4ede1;
+  --color-gray-200: #e7decd;
+  --color-gray-300: #d6cab3;
+  --color-gray-400: #a79b86;
+  --color-gray-500: #8a8172;
+  --color-gray-600: #6b6357;
+  --color-gray-700: #4e483e;
+  --color-gray-800: #332e27;
+  --color-gray-900: #26221c;
+  --color-gray-950: #191612;
+
+  /* ---- Verde-erva (remapeia emerald: cor principal do app) ---- */
+  --color-emerald-50: #eef4ee;
+  --color-emerald-100: #dbeade;
+  --color-emerald-200: #bad6c0;
+  --color-emerald-300: #90be9b;
+  --color-emerald-400: #5c9a6d;
+  --color-emerald-500: #3b7a4f;
+  --color-emerald-600: #2e6b47;
+  --color-emerald-700: #255839;
+  --color-emerald-800: #1e482f;
+  --color-emerald-900: #183a27;
+  --color-emerald-950: #0e2318;
+
+  /* Espelha green -> mesmo verde-erva */
+  --color-green-50: #eef4ee;
+  --color-green-100: #dbeade;
+  --color-green-200: #bad6c0;
+  --color-green-300: #90be9b;
+  --color-green-400: #5c9a6d;
+  --color-green-500: #3b7a4f;
+  --color-green-600: #2e6b47;
+  --color-green-700: #255839;
+  --color-green-800: #1e482f;
+  --color-green-900: #183a27;
+  --color-green-950: #0e2318;
+
+  /* ---- Dourado (amber = carboidratos) ---- */
+  --color-amber-50: #faf3df;
+  --color-amber-100: #f6e9c6;
+  --color-amber-200: #edd79b;
+  --color-amber-300: #e1bf6a;
+  --color-amber-400: #cfa23f;
+  --color-amber-500: #bf922c;
+  --color-amber-600: #a67a22;
+  --color-amber-700: #85601d;
+  --color-amber-800: #6b4e1e;
+  --color-amber-900: #5a421c;
+  --color-amber-950: #33240e;
+
+  /* Estrela de favorito (yellow) -> mesmo dourado */
+  --color-yellow-50: #faf3df;
+  --color-yellow-100: #f6e9c6;
+  --color-yellow-200: #edd79b;
+  --color-yellow-300: #e1bf6a;
+  --color-yellow-400: #cfa23f;
+  --color-yellow-500: #bf922c;
+  --color-yellow-600: #a67a22;
+  --color-yellow-700: #85601d;
+  --color-yellow-800: #6b4e1e;
+  --color-yellow-900: #5a421c;
+  --color-yellow-950: #33240e;
+
+  /* ---- Terracota (rose = proteínas / destaque quente) ---- */
+  --color-rose-50: #fbede8;
+  --color-rose-100: #f7ddd3;
+  --color-rose-200: #efbead;
+  --color-rose-300: #e39a82;
+  --color-rose-400: #d2704f;
+  --color-rose-500: #c0503a;
+  --color-rose-600: #a94531;
+  --color-rose-700: #8c3928;
+  --color-rose-800: #722f22;
+  --color-rose-900: #5e281e;
+  --color-rose-950: #341310;
+
+  /* ---- Abóbora (orange = frutas) ---- */
+  --color-orange-50: #fcefe0;
+  --color-orange-100: #f8dfc1;
+  --color-orange-200: #f0c08c;
+  --color-orange-300: #e39f55;
+  --color-orange-400: #d6852f;
+  --color-orange-500: #c67320;
+  --color-orange-600: #a85d1b;
+  --color-orange-700: #854919;
+  --color-orange-800: #6b3c1b;
+  --color-orange-900: #593218;
+  --color-orange-950: #331b0c;
+
+  /* ---- Sálvia (remapeia blue -> caixa de nutrição, harmônica com o creme) ---- */
+  --color-blue-50: #eaf1ee;
+  --color-blue-100: #d5e4dd;
+  --color-blue-200: #aec9be;
+  --color-blue-300: #7fa898;
+  --color-blue-400: #548574;
+  --color-blue-500: #3c6d5d;
+  --color-blue-600: #305848;
+  --color-blue-700: #274839;
+  --color-blue-800: #1f3a2f;
+  --color-blue-900: #1a3028;
+  --color-blue-950: #0e1b16;
+
+  /* ---- Ameixa suave (purple = selo "compartilhada") ---- */
+  --color-purple-50: #f3ecf4;
+  --color-purple-100: #ede3ee;
+  --color-purple-200: #dcc8de;
+  --color-purple-300: #c4a6c8;
+  --color-purple-400: #a67daa;
+  --color-purple-500: #8e5f92;
+  --color-purple-600: #7a5480;
+  --color-purple-700: #634468;
+  --color-purple-800: #4f3753;
+  --color-purple-900: #3f2a44;
+  --color-purple-950: #241627;
+
+  /* ---- Vermelho quente (excluir / erros) ---- */
+  --color-red-50: #fbeae5;
+  --color-red-100: #f8e0da;
+  --color-red-200: #f1c4b8;
+  --color-red-300: #e59d8a;
+  --color-red-400: #dc7a63;
+  --color-red-500: #ce5a40;
+  --color-red-600: #b84630;
+  --color-red-700: #973826;
+  --color-red-800: #7b2f20;
+  --color-red-900: #66291d;
+  --color-red-950: #37110b;
+}
+
+:root {
+  --background: #f7f2e9;
+  --foreground: #26221c;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0b1120;
-    --foreground: #e2e8f0;
+    --background: #191612;
+    --foreground: #efe7d8;
   }
 }
 
@@ -28,4 +187,24 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+}
+
+/* Títulos usam a display Bricolage Grotesque automaticamente */
+@layer base {
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+
+  /* Foco mais bonito e coerente com o verde-erva */
+  :focus-visible {
+    outline: 2px solid var(--color-emerald-600);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--color-rose-500) 28%, transparent);
+  }
 }
