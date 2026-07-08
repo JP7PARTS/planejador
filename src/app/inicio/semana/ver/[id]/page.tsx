@@ -211,7 +211,7 @@ export default function VerSemanaPage() {
               {/* Divisão por pessoa (se conjunta) */}
               {isShared && (
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <ResumoPessoa titulo="Você (Eu)" resumo={resumoEu} />
+                  <ResumoPessoa titulo={dados.owner_name} resumo={resumoEu} />
                   <ResumoPessoa
                     titulo={dados.week.person2_name || "Outra pessoa"}
                     resumo={resumoP2}
