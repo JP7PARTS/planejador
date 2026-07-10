@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* O modo escuro passa a responder ao atributo data-theme no <html>
+ * (controlado pelo botão sol/lua), em vez da preferência do sistema. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 /* ------------------------------------------------------------------ *
  * Planejador de Marmitas — tema "caseiro & apetitoso"
  * Reskin global: remapeia a paleta padrão do Tailwind e as fontes.
@@ -171,11 +175,9 @@
   --foreground: #26221c;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #191612;
-    --foreground: #efe7d8;
-  }
+[data-theme="dark"] {
+  --background: #191612;
+  --foreground: #efe7d8;
 }
 
 html {
