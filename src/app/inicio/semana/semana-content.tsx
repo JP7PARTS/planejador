@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Food, WeekItemDB } from "@/lib/types";
+import { Food, WeekItemDB, RecipeWithIngredients } from "@/lib/types";
 import { createClient } from "@/lib/supabase/client";
 import {
   calculateWeekSummary,
@@ -13,12 +13,15 @@ import {
   WeekSummary,
 } from "@/lib/calc";
 import { getWeek } from "@/lib/api/weeks";
+import { listRecipes } from "@/lib/api/recipes";
 import { getHouseholdSummary } from "@/lib/api/household";
 import SemanaSalvaModal from "./semana-salva";
 import ResumoPessoa from "./resumo-pessoa";
 import ListaCompras from "./lista-compras";
 import AlimentoSelect from "./alimento-select";
 import MontagemMarmitas, { PessoaMontagem } from "./montagem";
+import ReceitaPicker from "./receita-picker";
+import GuiaPreparo from "./guia-preparo";
 import Link from "next/link";
 
 // Uma linha da UI = um alimento com os dados das duas pessoas (na semana
@@ -64,6 +67,13 @@ export default function SemanaContent() {
   const [numMarmitasP2, setNumMarmitasP2] = useState(7);
   const [resumoEu, setResumoEu] = useState<WeekSummary | null>(null);
   const [resumoP2, setResumoP2] = useState<WeekSummary | null>(null);
+
+  // Receitas: biblioteca do usuário + quais estão nesta semana (guia de preparo).
+  const [receitasDisponiveis, setReceitasDisponiveis] = useState<
+    RecipeWithIngredients[]
+  >([]);
+  const [receitaIdsNaSemana, setReceitaIdsNaSemana] = useState<string[]>([]);
+  const [mostrarPicker, setMostrarPicker] = useState(false);
 
   // Texto exibido nos campos de quantidade — permite esvaziar o input durante a
   // edição sem tocar no número (que segue como fonte da verdade dos cálculos).
@@ -166,9 +176,17 @@ export default function SemanaContent() {
       if (error) throw error;
       setAlimentos(data || []);
 
+      // Receitas do usuário (para o seletor "+ Receita" e o guia de preparo).
+      try {
+        setReceitasDisponiveis(await listRecipes());
+      } catch {
+        // Sem receitas ou tabela ausente: segue sem receitas.
+      }
+
       // Se houver semanaId, carrega a semana
       if (semanaId) {
         const weekData = await getWeek(semanaId);
+        setReceitaIdsNaSemana(weekData.recipe_ids || []);
         setTituloSemana(weekData.week.title || "");
         setNumMarmitas(weekData.week.num_marmitas);
         setNotas(weekData.week.notes || "");
@@ -263,6 +281,30 @@ export default function SemanaContent() {
     setRows([...rows, novaLinha]);
   }
 
+  // Joga uma receita na semana: cada ingrediente vira uma linha de alimento
+  // (entra sozinho na nutrição e na lista de compras) e a receita é adicionada
+  // ao guia de preparo.
+  function adicionarReceita(receita: RecipeWithIngredients) {
+    const novasLinhas: FoodRow[] = receita.ingredients.map((ing) => ({
+      foodId: ing.food_id,
+      p1On: true,
+      p1Grams: ing.cooked_grams_per_marmita,
+      p1Marmitas: numMarmitas,
+      p2On: isShared,
+      p2Grams: ing.cooked_grams_per_marmita,
+      p2Marmitas: numMarmitasP2,
+    }));
+    setRows((prev) => [...prev, ...novasLinhas]);
+    setReceitaIdsNaSemana((prev) =>
+      prev.includes(receita.id) ? prev : [...prev, receita.id]
+    );
+    setMostrarPicker(false);
+  }
+
+  function removerReceitaDoGuia(recipeId: string) {
+    setReceitaIdsNaSemana((prev) => prev.filter((r) => r !== recipeId));
+  }
+
   function removerLinha(index: number) {
     setRows(rows.filter((_, i) => i !== index));
   }
@@ -289,6 +331,11 @@ export default function SemanaContent() {
 
   // Complementos que aparecem na lista de compras = base pessoal + extras.
   const complementos = [...basicos, ...extras];
+
+  // Receitas desta semana (resolvidas da biblioteca) para o guia de preparo.
+  const receitasDaSemana = receitaIdsNaSemana
+    .map((rid) => receitasDisponiveis.find((r) => r.id === rid))
+    .filter((r): r is RecipeWithIngredients => !!r);
 
   // Pessoas para a "montagem das marmitas": conjunta = duas pessoas (cada uma
   // com seus itens/marmitas); normal = só quem monta. Reusa os resumos já
@@ -531,12 +578,20 @@ export default function SemanaContent() {
                 <h2 className="text-lg font-bold [font-family:var(--font-display)]">
                   Alimentos da semana
                 </h2>
-                <button
-                  onClick={adicionarLinha}
-                  className="rounded-[10px] bg-[#E9F0E7] px-3.5 py-2 text-sm font-semibold text-emerald-700 transition hover:brightness-95 dark:bg-emerald-950/40 dark:text-emerald-300"
-                >
-                  + Adicionar
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setMostrarPicker(true)}
+                    className="rounded-[10px] border border-emerald-600/40 bg-white px-3.5 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-[#E9F0E7] dark:border-emerald-800 dark:bg-slate-900 dark:text-emerald-300 dark:hover:bg-emerald-950/40"
+                  >
+                    + Receita
+                  </button>
+                  <button
+                    onClick={adicionarLinha}
+                    className="rounded-[10px] bg-[#E9F0E7] px-3.5 py-2 text-sm font-semibold text-emerald-700 transition hover:brightness-95 dark:bg-emerald-950/40 dark:text-emerald-300"
+                  >
+                    + Adicionar
+                  </button>
+                </div>
               </div>
 
               {rows.length === 0 ? (
@@ -802,6 +857,14 @@ export default function SemanaContent() {
               </div>
             </div>
 
+            {/* Guia de preparo das receitas usadas nesta semana */}
+            {receitasDaSemana.length > 0 && (
+              <GuiaPreparo
+                receitas={receitasDaSemana}
+                onRemover={removerReceitaDoGuia}
+              />
+            )}
+
             {/* Anotações */}
             <div className={cardCls}>
               <label className="block text-sm font-semibold">
@@ -928,7 +991,17 @@ export default function SemanaContent() {
           {montando && (
             <MontagemMarmitas
               pessoas={pessoasMontagem}
+              receitas={receitasDaSemana}
               onClose={() => setMontando(false)}
+            />
+          )}
+
+          {mostrarPicker && (
+            <ReceitaPicker
+              receitas={receitasDisponiveis}
+              alimentos={alimentos}
+              onEscolher={adicionarReceita}
+              onClose={() => setMostrarPicker(false)}
             />
           )}
 
@@ -943,6 +1016,7 @@ export default function SemanaContent() {
               isShared={isShared}
               person2Name={person2Name}
               numMarmitasP2={numMarmitasP2}
+              recipeIds={receitaIdsNaSemana}
               onClose={() => setMostrando(false)}
               onSuccess={() => {
                 setMostrando(false);
@@ -955,6 +1029,7 @@ export default function SemanaContent() {
                 setIsShared(false);
                 setPerson2Name("Namorada");
                 setNumMarmitasP2(7);
+                setReceitaIdsNaSemana([]);
               }}
             />
           )}

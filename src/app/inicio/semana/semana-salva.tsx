@@ -5,6 +5,7 @@ import {
   addWeekItem,
   updateWeek,
   replaceWeekItems,
+  replaceWeekRecipes,
   WeekItemData,
 } from "@/lib/api/weeks";
 import { WeekItem } from "@/lib/calc";
@@ -21,6 +22,7 @@ interface Props {
   isShared: boolean;
   person2Name: string;
   numMarmitasP2: number;
+  recipeIds?: string[];
   onClose: () => void;
   onSuccess: () => void;
 }
@@ -35,6 +37,7 @@ export default function SemanaSalvaModal({
   isShared,
   person2Name,
   numMarmitasP2,
+  recipeIds = [],
   onClose,
   onSuccess,
 }: Props) {
@@ -87,6 +90,7 @@ export default function SemanaSalvaModal({
       for (const item of itensParaSalvar()) {
         await addWeekItem(week.id, item);
       }
+      await replaceWeekRecipes(week.id, recipeIds);
 
       onSuccess();
       router.push("/inicio/semanas");
@@ -115,6 +119,7 @@ export default function SemanaSalvaModal({
         extras,
       });
       await replaceWeekItems(semanaId, itensParaSalvar());
+      await replaceWeekRecipes(semanaId, recipeIds);
 
       onSuccess();
       router.push("/inicio/semanas");

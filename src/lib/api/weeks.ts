@@ -1,4 +1,4 @@
-import { Week, WeekItemDB } from "@/lib/types";
+import { Week, WeekItemDB, RecipeWithIngredients } from "@/lib/types";
 
 export interface WeekData {
   title: string;
@@ -25,7 +25,9 @@ export async function listWeeks(): Promise<Week[]> {
   return res.json();
 }
 
-export async function getWeek(id: string): Promise<{ week: Week; items: WeekItemDB[] }> {
+export async function getWeek(
+  id: string
+): Promise<{ week: Week; items: WeekItemDB[]; recipe_ids: string[] }> {
   const res = await fetch(`/api/weeks/${id}`);
   if (!res.ok) {
     throw new Error(`Erro ao carregar semana: ${res.statusText}`);
@@ -62,6 +64,7 @@ export interface WeekFull {
   };
   owner_name: string;
   items: WeekFullItem[];
+  recipes: RecipeWithIngredients[];
 }
 
 // Busca a semana com os dados do alimento resolvidos no servidor (funciona
@@ -173,5 +176,21 @@ export async function deleteWeekItem(weekId: string, itemId: string): Promise<vo
   if (!res.ok) {
     const error = await res.json();
     throw new Error(error.error || "Erro ao remover alimento");
+  }
+}
+
+// Substitui as receitas vinculadas à semana (para o guia de preparo).
+export async function replaceWeekRecipes(
+  weekId: string,
+  recipeIds: string[]
+): Promise<void> {
+  const res = await fetch(`/api/weeks/${weekId}/recipes`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ recipe_ids: recipeIds }),
+  });
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.error || "Erro ao vincular receitas");
   }
 }

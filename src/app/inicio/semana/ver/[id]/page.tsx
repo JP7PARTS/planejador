@@ -15,6 +15,7 @@ import {
 import ResumoPessoa from "../../resumo-pessoa";
 import ListaCompras from "../../lista-compras";
 import MontagemMarmitas, { PessoaMontagem } from "../../montagem";
+import GuiaPreparo from "../../guia-preparo";
 
 type Categoria = Food["category"];
 
@@ -201,6 +202,7 @@ export default function VerSemanaPage() {
       {montando && (
         <MontagemMarmitas
           pessoas={pessoasMontagem}
+          receitas={dados?.recipes ?? []}
           onClose={() => setMontando(false)}
         />
       )}
@@ -318,6 +320,10 @@ export default function VerSemanaPage() {
                 </div>
               </div>
             </>
+          )}
+
+          {dados.recipes && dados.recipes.length > 0 && (
+            <GuiaPreparo receitas={dados.recipes} />
           )}
 
           {dados.week.notes && (

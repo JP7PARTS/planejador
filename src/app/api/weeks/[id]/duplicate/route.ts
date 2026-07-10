@@ -115,6 +115,21 @@ export async function POST(
       }
     }
 
+    // Copia os vínculos de receita (guia de preparo) para a nova semana.
+    const { data: origRecipes } = await supabase
+      .from("week_recipes")
+      .select("recipe_id")
+      .eq("week_id", id);
+
+    if (origRecipes && origRecipes.length > 0) {
+      await supabase.from("week_recipes").insert(
+        origRecipes.map((r) => ({
+          week_id: newWeek.id,
+          recipe_id: r.recipe_id,
+        }))
+      );
+    }
+
     return NextResponse.json(newWeek, { status: 201 });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Erro interno";
