@@ -1,6 +1,8 @@
 "use client";
 
 import { WeekItemResult } from "@/lib/calc";
+import { RecipeWithIngredients } from "@/lib/types";
+import GuiaPreparo from "./guia-preparo";
 
 // Uma pessoa na montagem: nome, quantas marmitas ela tem e os itens (já
 // calculados) que vão nas marmitas dela.
@@ -15,9 +17,11 @@ export interface PessoaMontagem {
 // vêm dos resumos já calculados (WeekItemResult). Sem cálculo novo.
 export default function MontagemMarmitas({
   pessoas,
+  receitas = [],
   onClose,
 }: {
   pessoas: PessoaMontagem[];
+  receitas?: RecipeWithIngredients[];
   onClose: () => void;
 }) {
   const comItens = pessoas.filter((p) => p.itens.length > 0);
@@ -116,6 +120,12 @@ export default function MontagemMarmitas({
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {receitas.length > 0 && (
+          <div className="mx-auto mt-6 w-full max-w-[1000px]">
+            <GuiaPreparo receitas={receitas} />
           </div>
         )}
       </div>

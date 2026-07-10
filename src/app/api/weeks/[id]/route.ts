@@ -43,7 +43,14 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({ week, items: items || [] });
+    // Receitas vinculadas (para o guia de preparo ao reabrir a semana).
+    const { data: wr } = await supabase
+      .from("week_recipes")
+      .select("recipe_id")
+      .eq("week_id", id);
+    const recipe_ids = (wr || []).map((r) => r.recipe_id as string);
+
+    return NextResponse.json({ week, items: items || [], recipe_ids });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Erro interno";
     return NextResponse.json({ error: msg }, { status: 500 });
