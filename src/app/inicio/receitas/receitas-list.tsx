@@ -1,7 +1,7 @@
 "use client";
 
 import { Food, RecipeWithIngredients } from "@/lib/types";
-import { deleteRecipe } from "@/lib/api/recipes";
+import { deleteRecipe, agruparIngredientes } from "@/lib/api/recipes";
 import { calculateWeekItem } from "@/lib/calc";
 import ReceitaForm from "./receita-form";
 import { useMemo, useState } from "react";
@@ -28,18 +28,29 @@ export default function ReceitasList({ recipes, alimentos, onRefresh }: Props) {
     return m;
   }, [alimentos]);
 
-  // Nutrição por marmita de uma receita = soma dos ingredientes (1 marmita).
+  // Nutrição por marmita = fixos + a 1ª opção de cada escolha (1 marmita).
   function nutricao(r: RecipeWithIngredients) {
+    const { fixos, escolhas } = agruparIngredientes(r.ingredients);
     let kcal = 0,
       prot = 0;
-    r.ingredients.forEach((i) => {
-      const food = foodsMap[i.food_id];
+    const somar = (foodId: string, grams: number) => {
+      const food = foodsMap[foodId];
       if (!food) return;
-      const res = calculateWeekItem(food, i.cooked_grams_per_marmita, 1);
+      const res = calculateWeekItem(food, grams, 1);
       kcal += res.kcalTotal;
       prot += res.proteinTotal;
+    };
+    fixos.forEach((i) => somar(i.food_id, i.cooked_grams_per_marmita));
+    escolhas.forEach((e) => {
+      if (e.food_ids[0]) somar(e.food_ids[0], e.cooked_grams_per_marmita);
     });
     return { kcal, prot };
+  }
+
+  // Nº de itens "lógicos" (fixos + escolhas), não as linhas de opção.
+  function numItens(r: RecipeWithIngredients) {
+    const { fixos, escolhas } = agruparIngredientes(r.ingredients);
+    return fixos.length + escolhas.length;
   }
 
   async function handleDelete(id: string) {
@@ -94,6 +105,7 @@ export default function ReceitasList({ recipes, alimentos, onRefresh }: Props) {
         <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-2.5">
           {recipes.map((r) => {
             const n = nutricao(r);
+            const qtd = numItens(r);
             return (
               <div
                 key={r.id}
@@ -104,8 +116,8 @@ export default function ReceitasList({ recipes, alimentos, onRefresh }: Props) {
                   {r.title}
                 </p>
                 <p className="mt-1 text-[12.5px] text-slate-500 dark:text-slate-400">
-                  {r.ingredients.length} ingrediente
-                  {r.ingredients.length === 1 ? "" : "s"} · {n.kcal.toFixed(0)}{" "}
+                  {qtd} ingrediente
+                  {qtd === 1 ? "" : "s"} · {n.kcal.toFixed(0)}{" "}
                   kcal · {fmt(n.prot)}P{" "}
                   <span className="text-slate-400">(por marmita)</span>
                 </p>
