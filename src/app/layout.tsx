@@ -36,8 +36,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" className={`${bricolage.variable} ${hanken.variable}`}>
-      <body>{children}</body>
+    <html
+      lang="pt-BR"
+      suppressHydrationWarning
+      className={`${bricolage.variable} ${hanken.variable}`}
+    >
+      <body>
+        {/* Aplica o tema salvo (ou o do sistema) antes da pintura, sem flash. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem("theme")||(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");document.documentElement.dataset.theme=t;}catch(e){document.documentElement.dataset.theme="light";}})();`,
+          }}
+        />
+        {children}
+      </body>
     </html>
   );
 }
