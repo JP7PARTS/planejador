@@ -16,7 +16,9 @@ const CATEGORIAS: { key: Food["category"]; label: string; emoji: string }[] = [
 interface Props {
   titulo: string;
   itens: ShoppingListItem[];
-  storageKey: string;
+  // Chave de persistência das marcações. Ausente (semana nova, não salva) =
+  // não persiste: os checkboxes começam sempre limpos e não são gravados.
+  storageKey?: string;
   // Temperos/básicos que não entram no cálculo (base pessoal + extras da semana).
   complementos?: string[];
 }
@@ -36,12 +38,20 @@ export default function ListaCompras({
   storageKey,
   complementos,
 }: Props) {
+  // Só persiste quando há uma semana salva (storageKey real). Semana nova não
+  // grava nem lê nada — os checkboxes começam sempre limpos.
+  const persist = !!storageKey;
   const chave = "lista-compras:" + storageKey;
   const [marcados, setMarcados] = useState<Set<string>>(new Set());
   const [aviso, setAviso] = useState<string | null>(null);
 
-  // Carrega as marcações salvas no navegador (por semana).
+  // Carrega as marcações salvas no navegador (por semana). Sem persistência,
+  // começa vazio a cada montagem.
   useEffect(() => {
+    if (!persist) {
+      setMarcados(new Set());
+      return;
+    }
     try {
       const raw = localStorage.getItem(chave);
       if (raw) {
@@ -52,7 +62,7 @@ export default function ListaCompras({
     } catch {
       setMarcados(new Set());
     }
-  }, [chave]);
+  }, [chave, persist]);
 
   function toggle(nome: string) {
     setMarcados((prev) => {
@@ -62,10 +72,12 @@ export default function ListaCompras({
       } else {
         novo.add(nome);
       }
-      try {
-        localStorage.setItem(chave, JSON.stringify(Array.from(novo)));
-      } catch {
-        // ignora se o localStorage não estiver disponível
+      if (persist) {
+        try {
+          localStorage.setItem(chave, JSON.stringify(Array.from(novo)));
+        } catch {
+          // ignora se o localStorage não estiver disponível
+        }
       }
       return novo;
     });

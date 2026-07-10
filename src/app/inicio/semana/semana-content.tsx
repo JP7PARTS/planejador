@@ -829,7 +829,7 @@ export default function SemanaContent() {
               }
               itens={resumo ? buildShoppingList(resumo) : []}
               complementos={complementos}
-              storageKey={semanaId ?? "nova"}
+              storageKey={semanaId ?? undefined}
             />
 
             {/* Nutrição da semana */}
