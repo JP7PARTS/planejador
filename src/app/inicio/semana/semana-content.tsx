@@ -13,14 +13,14 @@ import {
   WeekSummary,
 } from "@/lib/calc";
 import { getWeek } from "@/lib/api/weeks";
-import { listRecipes } from "@/lib/api/recipes";
+import { listRecipes, agruparIngredientes } from "@/lib/api/recipes";
 import { getHouseholdSummary } from "@/lib/api/household";
 import SemanaSalvaModal from "./semana-salva";
 import ResumoPessoa from "./resumo-pessoa";
 import ListaCompras from "./lista-compras";
 import AlimentoSelect from "./alimento-select";
 import MontagemMarmitas, { PessoaMontagem } from "./montagem";
-import ReceitaPicker from "./receita-picker";
+import ReceitaPicker, { EscolhaResolvida } from "./receita-picker";
 import GuiaPreparo from "./guia-preparo";
 import Link from "next/link";
 
@@ -281,17 +281,31 @@ export default function SemanaContent() {
     setRows([...rows, novaLinha]);
   }
 
-  // Joga uma receita na semana: cada ingrediente vira uma linha de alimento
-  // (entra sozinho na nutrição e na lista de compras) e a receita é adicionada
-  // ao guia de preparo.
-  function adicionarReceita(receita: RecipeWithIngredients) {
-    const novasLinhas: FoodRow[] = receita.ingredients.map((ing) => ({
-      foodId: ing.food_id,
+  // Joga uma receita na semana: os ingredientes fixos + a opção escolhida de
+  // cada "escolha" viram linhas de alimento (entram sozinhas na nutrição e na
+  // lista de compras) e a receita entra no guia de preparo.
+  function adicionarReceita(
+    receita: RecipeWithIngredients,
+    escolhas: EscolhaResolvida[]
+  ) {
+    const { fixos } = agruparIngredientes(receita.ingredients);
+    const itens = [
+      ...fixos.map((f) => ({
+        foodId: f.food_id,
+        grams: f.cooked_grams_per_marmita,
+      })),
+      ...escolhas.map((e) => ({
+        foodId: e.food_id,
+        grams: e.cooked_grams_per_marmita,
+      })),
+    ];
+    const novasLinhas: FoodRow[] = itens.map((it) => ({
+      foodId: it.foodId,
       p1On: true,
-      p1Grams: ing.cooked_grams_per_marmita,
+      p1Grams: it.grams,
       p1Marmitas: numMarmitas,
       p2On: isShared,
-      p2Grams: ing.cooked_grams_per_marmita,
+      p2Grams: it.grams,
       p2Marmitas: numMarmitasP2,
     }));
     setRows((prev) => [...prev, ...novasLinhas]);

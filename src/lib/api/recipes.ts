@@ -1,10 +1,52 @@
-import { RecipeWithIngredients } from "@/lib/types";
+import { RecipeWithIngredients, RecipeIngredient } from "@/lib/types";
 
-// Um ingrediente ao criar/editar uma receita: aponta para um alimento e diz
-// quantos gramas prontos entram por marmita.
+// Uma "escolha" já agrupada (as linhas do mesmo choice_group viram um slot).
+export interface RecipeChoice {
+  group: number;
+  label: string;
+  cooked_grams_per_marmita: number;
+  food_ids: string[];
+}
+
+// Separa os ingredientes de uma receita em fixos (choice_group null) e escolhas
+// (agrupadas por choice_group). Usado no form, no seletor e ao montar a semana.
+export function agruparIngredientes(ings: RecipeIngredient[]): {
+  fixos: RecipeIngredient[];
+  escolhas: RecipeChoice[];
+} {
+  const fixos = ings.filter((i) => i.choice_group == null);
+  const map = new Map<number, RecipeChoice>();
+  ings.forEach((i) => {
+    if (i.choice_group == null) return;
+    const existente = map.get(i.choice_group);
+    if (existente) {
+      existente.food_ids.push(i.food_id);
+    } else {
+      map.set(i.choice_group, {
+        group: i.choice_group,
+        label: i.choice_label ?? "Escolha",
+        cooked_grams_per_marmita: i.cooked_grams_per_marmita,
+        food_ids: [i.food_id],
+      });
+    }
+  });
+  const escolhas = Array.from(map.values()).sort((a, b) => a.group - b.group);
+  return { fixos, escolhas };
+}
+
+// Um ingrediente fixo ao criar/editar uma receita: aponta para um alimento e
+// diz quantos gramas prontos entram por marmita.
 export interface RecipeIngredientInput {
   food_id: string;
   cooked_grams_per_marmita: number;
+}
+
+// Um ingrediente "à escolha": um rótulo (ex.: "Carne"), as gramas e a lista de
+// alimentos que podem ser escolhidos ao usar a receita numa semana.
+export interface RecipeChoiceInput {
+  label: string;
+  cooked_grams_per_marmita: number;
+  food_ids: string[];
 }
 
 // Dados enviados para criar/editar uma receita.
@@ -16,6 +58,7 @@ export interface RecipeInput {
   yield_marmitas: number | null;
   prep_notes: string | null;
   ingredients: RecipeIngredientInput[];
+  choices: RecipeChoiceInput[];
 }
 
 export async function listRecipes() {

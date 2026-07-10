@@ -60,6 +60,10 @@ export interface RecipeIngredient {
   recipe_id: string;
   food_id: string;
   cooked_grams_per_marmita: number;
+  // Ingrediente "à escolha": linhas com o mesmo choice_group/choice_label são
+  // opções de um mesmo slot (ex.: "Carne"). NULL = ingrediente fixo.
+  choice_group: number | null;
+  choice_label: string | null;
   created_at: string;
 }
 

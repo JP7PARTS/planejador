@@ -1,7 +1,12 @@
 "use client";
 
 import { Food, RecipeWithIngredients } from "@/lib/types";
-import { createRecipe, updateRecipe, RecipeInput } from "@/lib/api/recipes";
+import {
+  createRecipe,
+  updateRecipe,
+  agruparIngredientes,
+  RecipeInput,
+} from "@/lib/api/recipes";
 import { calculateWeekItem } from "@/lib/calc";
 import AlimentoSelect from "../semana/alimento-select";
 import { FormEvent, useMemo, useState } from "react";
@@ -9,6 +14,12 @@ import { FormEvent, useMemo, useState } from "react";
 interface LinhaIng {
   foodId: string;
   gramsStr: string;
+}
+
+interface EscolhaForm {
+  label: string;
+  gramsStr: string;
+  foodIds: string[];
 }
 
 interface Props {
@@ -31,14 +42,25 @@ export default function ReceitaForm({
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
+  const agrupado = recipe ? agruparIngredientes(recipe.ingredients) : null;
+
   const [title, setTitle] = useState(recipe?.title ?? "");
   const [linhas, setLinhas] = useState<LinhaIng[]>(
-    recipe?.ingredients.length
-      ? recipe.ingredients.map((i) => ({
+    agrupado
+      ? agrupado.fixos.map((i) => ({
           foodId: i.food_id,
           gramsStr: String(i.cooked_grams_per_marmita),
         }))
       : [{ foodId: "", gramsStr: "100" }]
+  );
+  const [escolhas, setEscolhas] = useState<EscolhaForm[]>(
+    agrupado
+      ? agrupado.escolhas.map((e) => ({
+          label: e.label,
+          gramsStr: String(e.cooked_grams_per_marmita),
+          foodIds: e.food_ids,
+        }))
+      : []
   );
   const [stepsText, setStepsText] = useState((recipe?.steps ?? []).join("\n"));
   const [totalTime, setTotalTime] = useState(
@@ -58,35 +80,66 @@ export default function ReceitaForm({
     return m;
   }, [alimentos]);
 
-  // Prévia de nutrição por marmita = soma dos ingredientes (1 marmita).
+  // Prévia de nutrição por marmita = fixos + a 1ª opção de cada escolha.
   const nut = useMemo(() => {
     let kcal = 0,
       prot = 0,
       carb = 0,
       fat = 0;
-    linhas.forEach((l) => {
-      const food = foodsMap[l.foodId];
-      const g = Number(l.gramsStr);
+    const somar = (foodId: string, gStr: string) => {
+      const food = foodsMap[foodId];
+      const g = Number(gStr);
       if (!food || !Number.isFinite(g) || g <= 0) return;
       const r = calculateWeekItem(food, g, 1);
       kcal += r.kcalTotal;
       prot += r.proteinTotal;
       carb += r.carbTotal;
       fat += r.fatTotal;
+    };
+    linhas.forEach((l) => somar(l.foodId, l.gramsStr));
+    escolhas.forEach((e) => {
+      if (e.foodIds[0]) somar(e.foodIds[0], e.gramsStr);
     });
     return { kcal, prot, carb, fat };
-  }, [linhas, foodsMap]);
+  }, [linhas, escolhas, foodsMap]);
 
+  // ---- Ingredientes fixos ----
   function atualizarLinha(idx: number, patch: Partial<LinhaIng>) {
-    setLinhas((prev) =>
-      prev.map((l, i) => (i === idx ? { ...l, ...patch } : l))
-    );
+    setLinhas((prev) => prev.map((l, i) => (i === idx ? { ...l, ...patch } : l)));
   }
   function adicionarLinha() {
     setLinhas((prev) => [...prev, { foodId: "", gramsStr: "100" }]);
   }
   function removerLinha(idx: number) {
     setLinhas((prev) => prev.filter((_, i) => i !== idx));
+  }
+
+  // ---- Escolhas ----
+  function atualizarEscolha(idx: number, patch: Partial<EscolhaForm>) {
+    setEscolhas((prev) => prev.map((e, i) => (i === idx ? { ...e, ...patch } : e)));
+  }
+  function adicionarEscolha() {
+    setEscolhas((prev) => [...prev, { label: "", gramsStr: "120", foodIds: [] }]);
+  }
+  function removerEscolha(idx: number) {
+    setEscolhas((prev) => prev.filter((_, i) => i !== idx));
+  }
+  function adicionarOpcao(idx: number, foodId: string) {
+    if (!foodId) return;
+    setEscolhas((prev) =>
+      prev.map((e, i) =>
+        i === idx && !e.foodIds.includes(foodId)
+          ? { ...e, foodIds: [...e.foodIds, foodId] }
+          : e
+      )
+    );
+  }
+  function removerOpcao(idx: number, foodId: string) {
+    setEscolhas((prev) =>
+      prev.map((e, i) =>
+        i === idx ? { ...e, foodIds: e.foodIds.filter((f) => f !== foodId) } : e
+      )
+    );
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -100,12 +153,20 @@ export default function ReceitaForm({
         cooked_grams_per_marmita: Number(l.gramsStr),
       }));
 
+    const choices = escolhas
+      .filter((c) => c.label.trim() && c.foodIds.length > 0 && Number(c.gramsStr) > 0)
+      .map((c) => ({
+        label: c.label.trim(),
+        cooked_grams_per_marmita: Number(c.gramsStr),
+        food_ids: c.foodIds,
+      }));
+
     if (!title.trim()) {
       setErro("Dê um nome para a receita.");
       return;
     }
-    if (ingredients.length === 0) {
-      setErro("Adicione pelo menos um ingrediente com gramas.");
+    if (ingredients.length === 0 && choices.length === 0) {
+      setErro("Adicione pelo menos um ingrediente ou uma escolha.");
       return;
     }
 
@@ -120,6 +181,7 @@ export default function ReceitaForm({
       yield_marmitas: yieldM === "" ? null : Number(yieldM),
       prep_notes: prepNotes.trim() || null,
       ingredients,
+      choices,
     };
 
     setCarregando(true);
@@ -145,6 +207,8 @@ export default function ReceitaForm({
     "mb-1.5 block text-xs font-semibold text-slate-500 dark:text-slate-400";
   const gramsInput =
     "w-[74px] rounded-[10px] border border-[#E2D7C4] bg-white px-2 py-2.5 text-center text-sm font-semibold text-slate-900 outline-none transition focus:border-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100";
+  const removerBtn =
+    "shrink-0 rounded-[9px] border border-[#F0DAD2] bg-[#FCF4F1] px-2.5 py-2 text-[13px] text-rose-600 transition hover:brightness-95 dark:border-rose-900 dark:bg-rose-950/20";
 
   return (
     <div
@@ -170,7 +234,7 @@ export default function ReceitaForm({
             placeholder="Ex.: Carne de panela com batata"
           />
 
-          {/* Ingredientes */}
+          {/* Ingredientes fixos */}
           <div className="mb-1.5 flex items-center justify-between">
             <label className="text-[13px] font-semibold">
               Ingredientes{" "}
@@ -187,7 +251,7 @@ export default function ReceitaForm({
             </button>
           </div>
 
-          <div className="mb-3 flex flex-col gap-2">
+          <div className="mb-4 flex flex-col gap-2">
             {linhas.map((l, idx) => (
               <div key={idx} className="flex items-center gap-2">
                 <div className="min-w-0 flex-1">
@@ -202,20 +266,110 @@ export default function ReceitaForm({
                   min="0"
                   step="1"
                   value={l.gramsStr}
-                  onChange={(e) =>
-                    atualizarLinha(idx, { gramsStr: e.target.value })
-                  }
+                  onChange={(e) => atualizarLinha(idx, { gramsStr: e.target.value })}
                   className={gramsInput}
                   aria-label="Gramas prontos por marmita"
                 />
                 <button
                   type="button"
                   onClick={() => removerLinha(idx)}
-                  className="shrink-0 rounded-[9px] border border-[#F0DAD2] bg-[#FCF4F1] px-2.5 py-2 text-[13px] text-rose-600 transition hover:brightness-95 dark:border-rose-900 dark:bg-rose-950/20"
+                  className={removerBtn}
                   aria-label="Remover ingrediente"
                 >
                   ✕
                 </button>
+              </div>
+            ))}
+          </div>
+
+          {/* Escolhas (ingredientes que variam) */}
+          <div className="mb-1.5 flex items-center justify-between">
+            <label className="text-[13px] font-semibold">
+              Escolhas{" "}
+              <span className="font-normal text-slate-400">
+                (ex.: a carne — você decide na hora)
+              </span>
+            </label>
+            <button
+              type="button"
+              onClick={adicionarEscolha}
+              className="rounded-[9px] bg-[#E9F0E7] px-3 py-1.5 text-[13px] font-semibold text-emerald-700 transition hover:brightness-95 dark:bg-emerald-950/40 dark:text-emerald-300"
+            >
+              + Escolha
+            </button>
+          </div>
+
+          <div className="mb-4 flex flex-col gap-3">
+            {escolhas.length === 0 && (
+              <p className="text-[12.5px] text-slate-400">
+                Nenhuma escolha. Use quando um ingrediente pode variar (ex.:
+                Carne → patinho, acém, músculo).
+              </p>
+            )}
+            {escolhas.map((esc, idx) => (
+              <div
+                key={idx}
+                className="rounded-[12px] border border-[#EFE7D8] bg-[#FCFAF5] p-3 dark:border-slate-700 dark:bg-slate-800/40"
+              >
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={esc.label}
+                    onChange={(e) => atualizarEscolha(idx, { label: e.target.value })}
+                    placeholder="Nome (ex.: Carne)"
+                    className="min-w-0 flex-1 rounded-[10px] border border-[#E2D7C4] bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none focus:border-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                  />
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={esc.gramsStr}
+                    onChange={(e) => atualizarEscolha(idx, { gramsStr: e.target.value })}
+                    className={gramsInput}
+                    aria-label="Gramas prontos por marmita"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removerEscolha(idx)}
+                    className={removerBtn}
+                    aria-label="Remover escolha"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {/* Opções da escolha */}
+                {esc.foodIds.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {esc.foodIds.map((fid) => (
+                      <span
+                        key={fid}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-[#E7DECD] bg-white px-2.5 py-1 text-[13px] font-medium dark:border-slate-700 dark:bg-slate-900"
+                      >
+                        {foodsMap[fid]?.name ?? "—"}
+                        <button
+                          type="button"
+                          onClick={() => removerOpcao(idx, fid)}
+                          className="text-rose-600 hover:opacity-70"
+                          aria-label="Remover opção"
+                        >
+                          ✕
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <div className="mt-2">
+                  <AlimentoSelect
+                    alimentos={alimentos}
+                    value=""
+                    onChange={(foodId) => adicionarOpcao(idx, foodId)}
+                  />
+                  <p className="mt-1 text-[11.5px] text-slate-400">
+                    Escolha um alimento para adicionar como opção.
+                  </p>
+                </div>
               </div>
             ))}
           </div>
@@ -227,6 +381,9 @@ export default function ReceitaForm({
             </span>{" "}
             {nut.kcal.toFixed(0)} kcal · {fmt(nut.prot)}P · {fmt(nut.carb)}C ·{" "}
             {fmt(nut.fat)}G
+            {escolhas.length > 0 && (
+              <span className="text-slate-400"> (usando a 1ª opção)</span>
+            )}
           </div>
 
           {/* Modo de preparo */}
