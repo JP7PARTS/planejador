@@ -8,6 +8,7 @@ import ThemeToggle from "../theme-toggle";
 const links = [
   { href: "/inicio", label: "Início" },
   { href: "/inicio/alimentos", label: "Alimentos" },
+  { href: "/inicio/receitas", label: "Receitas" },
   { href: "/inicio/semana", label: "Montar" },
   { href: "/inicio/semanas", label: "Semanas" },
   { href: "/inicio/configuracoes", label: "Ajustes" },
