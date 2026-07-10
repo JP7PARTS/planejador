@@ -350,9 +350,18 @@ export default function SemanaContent() {
                     type="number"
                     min="1"
                     value={numMarmitas}
-                    onChange={(e) =>
-                      setNumMarmitas(Math.max(1, Number(e.target.value)))
-                    }
+                    onChange={(e) => {
+                      const num = Number(e.target.value);
+                      if (!isNaN(num) && num > 0) {
+                        setNumMarmitas(num);
+                      }
+                    }}
+                    onBlur={(e) => {
+                      const val = Number(e.target.value);
+                      if (isNaN(val) || val < 1 || e.target.value === '') {
+                        setNumMarmitas(1);
+                      }
+                    }}
                     className="w-[70px] rounded-[11px] border border-[#E2D7C4] bg-[#FCFAF5] py-2 text-center text-lg font-bold text-slate-900 outline-none focus:border-emerald-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   />
                   <button
@@ -402,29 +411,83 @@ export default function SemanaContent() {
                       <label className="mb-1 block text-xs font-semibold text-slate-500 dark:text-slate-400">
                         Marmitas de {meuNome}
                       </label>
-                      <input
-                        type="number"
-                        min="1"
-                        value={numMarmitas}
-                        onChange={(e) =>
-                          setNumMarmitas(Math.max(1, Number(e.target.value)))
-                        }
-                        className={`${inp} w-[90px] text-center`}
-                      />
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setNumMarmitas(Math.max(1, numMarmitas - 1))}
+                          className="size-[32px] rounded-lg border border-[#E2D7C4] bg-[#FCFAF5] text-lg text-slate-900 transition hover:brightness-95 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                          aria-label={`Diminuir marmitas de ${meuNome}`}
+                        >
+                          −
+                        </button>
+                        <input
+                          type="number"
+                          min="1"
+                          value={numMarmitas}
+                          onChange={(e) => {
+                            const num = Number(e.target.value);
+                            if (!isNaN(num) && num > 0) {
+                              setNumMarmitas(num);
+                            }
+                          }}
+                          onBlur={(e) => {
+                            const val = Number(e.target.value);
+                            if (isNaN(val) || val < 1 || e.target.value === '') {
+                              setNumMarmitas(1);
+                            }
+                          }}
+                          className={`${inp} w-[60px] text-center`}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setNumMarmitas(numMarmitas + 1)}
+                          className="size-[32px] rounded-lg border border-[#E2D7C4] bg-[#FCFAF5] text-lg text-slate-900 transition hover:brightness-95 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                          aria-label={`Aumentar marmitas de ${meuNome}`}
+                        >
+                          +
+                        </button>
+                      </div>
                     </div>
                     <div>
                       <label className="mb-1 block text-xs font-semibold text-slate-500 dark:text-slate-400">
                         Marmitas de {person2Name || "outra pessoa"}
                       </label>
-                      <input
-                        type="number"
-                        min="1"
-                        value={numMarmitasP2}
-                        onChange={(e) =>
-                          setNumMarmitasP2(Math.max(1, Number(e.target.value)))
-                        }
-                        className={`${inp} w-[90px] text-center`}
-                      />
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setNumMarmitasP2(Math.max(1, numMarmitasP2 - 1))}
+                          className="size-[32px] rounded-lg border border-[#E2D7C4] bg-[#FCFAF5] text-lg text-slate-900 transition hover:brightness-95 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                          aria-label={`Diminuir marmitas de ${person2Name || "outra pessoa"}`}
+                        >
+                          −
+                        </button>
+                        <input
+                          type="number"
+                          min="1"
+                          value={numMarmitasP2}
+                          onChange={(e) => {
+                            const num = Number(e.target.value);
+                            if (!isNaN(num) && num > 0) {
+                              setNumMarmitasP2(num);
+                            }
+                          }}
+                          onBlur={(e) => {
+                            const val = Number(e.target.value);
+                            if (isNaN(val) || val < 1 || e.target.value === '') {
+                              setNumMarmitasP2(1);
+                            }
+                          }}
+                          className={`${inp} w-[60px] text-center`}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setNumMarmitasP2(numMarmitasP2 + 1)}
+                          className="size-[32px] rounded-lg border border-[#E2D7C4] bg-[#FCFAF5] text-lg text-slate-900 transition hover:brightness-95 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                          aria-label={`Aumentar marmitas de ${person2Name || "outra pessoa"}`}
+                        >
+                          +
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
