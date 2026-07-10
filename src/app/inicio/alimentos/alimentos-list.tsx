@@ -3,6 +3,7 @@
 import { Food } from "@/lib/types";
 import { deleteFood } from "@/lib/api/foods";
 import FoodForm from "./food-form";
+import AlimentosImport from "./alimentos-import";
 import { useState } from "react";
 
 interface Props {
@@ -27,6 +28,7 @@ function fmtG(n: number): string {
 export default function AlimentosList({ alimentos, onRefresh }: Props) {
   const [editingFood, setEditingFood] = useState<Food | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
   const [deletandoId, setDeletandoId] = useState<string | null>(null);
   const [erroDelete, setErroDelete] = useState<string | null>(null);
 
@@ -59,12 +61,20 @@ export default function AlimentosList({ alimentos, onRefresh }: Props) {
             {alimentos.length} alimentos · nutrição por 100g cru
           </p>
         </div>
-        <button
-          onClick={() => setIsCreating(true)}
-          className="rounded-xl bg-emerald-600 px-[18px] py-2.5 text-[15px] font-semibold text-white transition hover:bg-emerald-700"
-        >
-          + Novo alimento
-        </button>
+        <div className="flex gap-2.5">
+          <button
+            onClick={() => setIsImporting(true)}
+            className="rounded-xl border border-[#E2D7C4] bg-white px-[18px] py-2.5 text-[15px] font-semibold text-slate-900 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+          >
+            📤 Importar
+          </button>
+          <button
+            onClick={() => setIsCreating(true)}
+            className="rounded-xl bg-emerald-600 px-[18px] py-2.5 text-[15px] font-semibold text-white transition hover:bg-emerald-700"
+          >
+            + Novo alimento
+          </button>
+        </div>
       </div>
 
       {erroDelete && (
@@ -145,6 +155,16 @@ export default function AlimentosList({ alimentos, onRefresh }: Props) {
           onSuccess={() => {
             setEditingFood(null);
             setIsCreating(false);
+            onRefresh();
+          }}
+        />
+      )}
+
+      {isImporting && (
+        <AlimentosImport
+          onClose={() => setIsImporting(false)}
+          onSuccess={() => {
+            setIsImporting(false);
             onRefresh();
           }}
         />

@@ -70,3 +70,28 @@ export interface RecipeIngredient {
 export interface RecipeWithIngredients extends Recipe {
   ingredients: RecipeIngredient[];
 }
+
+// Tipos para importação em massa de alimentos
+export interface ImportFood {
+  name: string;
+  category: "carbo" | "proteina" | "vegetal" | "fruta" | "outro";
+  kcal_per_100g?: number;
+  protein_g_per_100g?: number;
+  carb_g_per_100g?: number;
+  fat_g_per_100g?: number;
+  fc?: number;
+}
+
+export interface BulkImportError {
+  row: number;
+  field: string;
+  value: string;
+  error: string;
+}
+
+export interface BulkImportResult {
+  imported: number;
+  skipped: number;
+  updated: number;
+  errors?: BulkImportError[];
+}
