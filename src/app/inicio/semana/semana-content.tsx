@@ -65,6 +65,19 @@ export default function SemanaContent() {
   const [resumoEu, setResumoEu] = useState<WeekSummary | null>(null);
   const [resumoP2, setResumoP2] = useState<WeekSummary | null>(null);
 
+  // Texto exibido nos campos de quantidade — permite esvaziar o input durante a
+  // edição sem tocar no número (que segue como fonte da verdade dos cálculos).
+  // Os efeitos sincronizam o texto sempre que o número muda por outra via
+  // (botões +/-, carregar uma semana salva, reset após salvar).
+  const [marmitasStr, setMarmitasStr] = useState(String(numMarmitas));
+  const [marmitasP2Str, setMarmitasP2Str] = useState(String(numMarmitasP2));
+  useEffect(() => {
+    setMarmitasStr(String(numMarmitas));
+  }, [numMarmitas]);
+  useEffect(() => {
+    setMarmitasP2Str(String(numMarmitasP2));
+  }, [numMarmitasP2]);
+
   // Lista plana de itens (1 ou 2 por alimento), derivada das linhas. É o que a
   // calc, o modal de salvar e o save consomem — sem mudança neles.
   const linhas: WeekItem[] = useMemo(() => {
@@ -334,45 +347,53 @@ export default function SemanaContent() {
           <div className="flex flex-col gap-3.5">
             {/* Marmitas + toggle conjunta */}
             <div className={`${cardCls} flex flex-wrap items-center gap-x-[18px] gap-y-4`}>
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.04em] text-slate-500 dark:text-slate-400">
-                  Quantas marmitas?
-                </label>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setNumMarmitas(Math.max(1, numMarmitas - 1))}
-                    className="size-[38px] rounded-[11px] border border-[#E2D7C4] bg-[#FCFAF5] text-xl text-slate-900 transition hover:brightness-95 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                    aria-label="Menos uma marmita"
-                  >
-                    −
-                  </button>
-                  <input
-                    type="number"
-                    min="1"
-                    value={numMarmitas}
-                    onChange={(e) => {
-                      const num = Number(e.target.value);
-                      if (!isNaN(num) && num > 0) {
-                        setNumMarmitas(num);
-                      }
-                    }}
-                    onBlur={(e) => {
-                      const val = Number(e.target.value);
-                      if (isNaN(val) || val < 1 || e.target.value === '') {
-                        setNumMarmitas(1);
-                      }
-                    }}
-                    className="w-[70px] rounded-[11px] border border-[#E2D7C4] bg-[#FCFAF5] py-2 text-center text-lg font-bold text-slate-900 outline-none focus:border-emerald-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                  />
-                  <button
-                    onClick={() => setNumMarmitas(numMarmitas + 1)}
-                    className="size-[38px] rounded-[11px] border border-[#E2D7C4] bg-[#FCFAF5] text-xl text-slate-900 transition hover:brightness-95 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                    aria-label="Mais uma marmita"
-                  >
-                    +
-                  </button>
+              {/* Seletor principal — some no modo conjunta (cada pessoa tem o seu) */}
+              {!isShared && (
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.04em] text-slate-500 dark:text-slate-400">
+                    Quantas marmitas?
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setNumMarmitas(Math.max(1, numMarmitas - 1))}
+                      className="size-[38px] rounded-[11px] border border-[#E2D7C4] bg-[#FCFAF5] text-xl text-slate-900 transition hover:brightness-95 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                      aria-label="Menos uma marmita"
+                    >
+                      −
+                    </button>
+                    <input
+                      type="number"
+                      min="1"
+                      value={marmitasStr}
+                      onChange={(e) => {
+                        setMarmitasStr(e.target.value);
+                        const num = Number(e.target.value);
+                        if (e.target.value !== "" && !isNaN(num) && num > 0) {
+                          setNumMarmitas(num);
+                        }
+                      }}
+                      onBlur={() => {
+                        const num = Number(marmitasStr);
+                        if (marmitasStr === "" || isNaN(num) || num < 1) {
+                          setNumMarmitas(1);
+                          setMarmitasStr("1");
+                        } else {
+                          setNumMarmitas(num);
+                          setMarmitasStr(String(num));
+                        }
+                      }}
+                      className="w-[70px] rounded-[11px] border border-[#E2D7C4] bg-[#FCFAF5] py-2 text-center text-lg font-bold text-slate-900 outline-none focus:border-emerald-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                    />
+                    <button
+                      onClick={() => setNumMarmitas(numMarmitas + 1)}
+                      className="size-[38px] rounded-[11px] border border-[#E2D7C4] bg-[#FCFAF5] text-xl text-slate-900 transition hover:brightness-95 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                      aria-label="Mais uma marmita"
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <label className="ml-auto flex cursor-pointer items-center gap-2.5 rounded-xl border border-[#E7DECD] bg-[#F7F2E9] px-3.5 py-2.5 dark:border-slate-700 dark:bg-slate-800">
                 <input
@@ -423,17 +444,22 @@ export default function SemanaContent() {
                         <input
                           type="number"
                           min="1"
-                          value={numMarmitas}
+                          value={marmitasStr}
                           onChange={(e) => {
+                            setMarmitasStr(e.target.value);
                             const num = Number(e.target.value);
-                            if (!isNaN(num) && num > 0) {
+                            if (e.target.value !== "" && !isNaN(num) && num > 0) {
                               setNumMarmitas(num);
                             }
                           }}
-                          onBlur={(e) => {
-                            const val = Number(e.target.value);
-                            if (isNaN(val) || val < 1 || e.target.value === '') {
+                          onBlur={() => {
+                            const num = Number(marmitasStr);
+                            if (marmitasStr === "" || isNaN(num) || num < 1) {
                               setNumMarmitas(1);
+                              setMarmitasStr("1");
+                            } else {
+                              setNumMarmitas(num);
+                              setMarmitasStr(String(num));
                             }
                           }}
                           className={`${inp} w-[60px] text-center`}
@@ -464,17 +490,22 @@ export default function SemanaContent() {
                         <input
                           type="number"
                           min="1"
-                          value={numMarmitasP2}
+                          value={marmitasP2Str}
                           onChange={(e) => {
+                            setMarmitasP2Str(e.target.value);
                             const num = Number(e.target.value);
-                            if (!isNaN(num) && num > 0) {
+                            if (e.target.value !== "" && !isNaN(num) && num > 0) {
                               setNumMarmitasP2(num);
                             }
                           }}
-                          onBlur={(e) => {
-                            const val = Number(e.target.value);
-                            if (isNaN(val) || val < 1 || e.target.value === '') {
+                          onBlur={() => {
+                            const num = Number(marmitasP2Str);
+                            if (marmitasP2Str === "" || isNaN(num) || num < 1) {
                               setNumMarmitasP2(1);
+                              setMarmitasP2Str("1");
+                            } else {
+                              setNumMarmitasP2(num);
+                              setMarmitasP2Str(String(num));
                             }
                           }}
                           className={`${inp} w-[60px] text-center`}
