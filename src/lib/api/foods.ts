@@ -62,71 +62,81 @@ export async function bulkImportFoods(
   return res.json() as Promise<BulkImportResult>;
 }
 
-export function generateCsvTemplate(): string {
-  const headers = [
-    "Nome",
-    "Categoria",
-    "kcal_per_100g",
-    "Proteína (g)",
-    "Carboidrato (g)",
-    "Gordura (g)",
-    "Fator de Cocção",
-  ];
+// Categorias válidas (mesmas do resto do site).
+export const CATEGORIAS_VALIDAS = [
+  "carbo",
+  "proteina",
+  "vegetal",
+  "fruta",
+  "outro",
+] as const;
 
-  const examples = [
-    [
-      "Frango grelhado",
-      "proteina",
-      "165",
-      "31",
-      "0",
-      "3.6",
-      "1.0",
-    ],
-    [
-      "Arroz cozido",
-      "carbo",
-      "130",
-      "2.7",
-      "28",
-      "0.3",
-      "3.0",
-    ],
-    [
-      "Brócolis cozido",
-      "vegetal",
-      "34",
-      "2.8",
-      "7",
-      "0.4",
-      "2.0",
-    ],
-  ];
+// Cabeçalhos do template (amigáveis, em português).
+export const TEMPLATE_HEADERS = [
+  "Nome",
+  "Categoria",
+  "kcal (por 100g)",
+  "Proteína (g)",
+  "Carboidrato (g)",
+  "Gordura (g)",
+  "Fator de Cocção",
+];
 
-  const rows: string[] = [headers.map((h) => `"${h}"`).join(",")];
+const TEMPLATE_EXAMPLES = [
+  ["Frango grelhado", "proteina", 165, 31, 0, 3.6, 1.0],
+  ["Arroz cozido", "carbo", 130, 2.7, 28, 0.3, 3.0],
+  ["Brócolis cozido", "vegetal", 34, 2.8, 7, 0.4, 2.0],
+];
 
-  examples.forEach((example) => {
-    rows.push(example.map((v) => `"${v}"`).join(","));
+// Gera um Excel (.xlsx) de verdade — abre com as colunas separadas e traz um
+// dropdown (validação de dados) na coluna Categoria com as opções do site.
+export async function downloadTemplate(): Promise<void> {
+  const ExcelJS = (await import("exceljs")).default;
+  const workbook = new ExcelJS.Workbook();
+  const sheet = workbook.addWorksheet("Alimentos");
+
+  sheet.addRow(TEMPLATE_HEADERS);
+  TEMPLATE_EXAMPLES.forEach((ex) => sheet.addRow(ex));
+
+  // Estilo do cabeçalho.
+  const header = sheet.getRow(1);
+  header.font = { bold: true };
+  header.eachCell((cell) => {
+    cell.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFEFE7D8" },
+    };
   });
 
-  rows.push("");
-  rows.push('# Categorias válidas: carbo, proteina, vegetal, fruta, outro');
-  rows.push('# Valores vazios: kcal e macros → 0; Fator de Cocção → 1.0');
+  // Larguras.
+  sheet.columns.forEach((col, i) => {
+    col.width = i === 0 ? 24 : 16;
+  });
 
-  return rows.join("\n");
-}
+  // Dropdown de Categoria (coluna B) da linha 2 até a 1000.
+  const lista = `"${CATEGORIAS_VALIDAS.join(",")}"`;
+  for (let r = 2; r <= 1000; r++) {
+    sheet.getCell(`B${r}`).dataValidation = {
+      type: "list",
+      allowBlank: false,
+      formulae: [lista],
+      showErrorMessage: true,
+      errorTitle: "Categoria inválida",
+      error: "Escolha: carbo, proteina, vegetal, fruta ou outro.",
+    };
+  }
 
-export function downloadCsvTemplate(): void {
-  const csv = generateCsvTemplate();
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const link = document.createElement("a");
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
   const url = URL.createObjectURL(blob);
-
-  link.setAttribute("href", url);
-  link.setAttribute("download", "alimentos-template.csv");
-  link.style.visibility = "hidden";
-
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "alimentos-modelo.xlsx";
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
