@@ -71,6 +71,15 @@ export const CATEGORIAS_VALIDAS = [
   "outro",
 ] as const;
 
+// Mapeamento de código interno → nome amigável (exibido no site e na planilha).
+export const CATEGORIAS_LABELS: Record<string, string> = {
+  carbo: "Carboidrato",
+  proteina: "Proteína",
+  vegetal: "Vegetal",
+  fruta: "Fruta",
+  outro: "Outro",
+};
+
 // Cabeçalhos do template (amigáveis, em português).
 export const TEMPLATE_HEADERS = [
   "Nome",
@@ -83,9 +92,9 @@ export const TEMPLATE_HEADERS = [
 ];
 
 const TEMPLATE_EXAMPLES = [
-  ["Frango grelhado", "proteina", 165, 31, 0, 3.6, 1.0],
-  ["Arroz cozido", "carbo", 130, 2.7, 28, 0.3, 3.0],
-  ["Brócolis cozido", "vegetal", 34, 2.8, 7, 0.4, 2.0],
+  ["Frango grelhado", "Proteína", 165, 31, 0, 3.6, 1.0],
+  ["Arroz cozido", "Carboidrato", 130, 2.7, 28, 0.3, 3.0],
+  ["Brócolis cozido", "Vegetal", 34, 2.8, 7, 0.4, 2.0],
 ];
 
 // Gera um Excel (.xlsx) de verdade — abre com as colunas separadas e traz um
@@ -115,7 +124,8 @@ export async function downloadTemplate(): Promise<void> {
   });
 
   // Dropdown de Categoria (coluna B) da linha 2 até a 1000.
-  const lista = `"${CATEGORIAS_VALIDAS.join(",")}"`;
+  const categoriesDisplay = CATEGORIAS_VALIDAS.map((c) => CATEGORIAS_LABELS[c]);
+  const lista = `"${categoriesDisplay.join(",")}"`;
   for (let r = 2; r <= 1000; r++) {
     sheet.getCell(`B${r}`).dataValidation = {
       type: "list",
@@ -123,7 +133,7 @@ export async function downloadTemplate(): Promise<void> {
       formulae: [lista],
       showErrorMessage: true,
       errorTitle: "Categoria inválida",
-      error: "Escolha: carbo, proteina, vegetal, fruta ou outro.",
+      error: `Escolha: ${categoriesDisplay.join(", ")}.`,
     };
   }
 
