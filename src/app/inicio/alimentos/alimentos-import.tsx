@@ -2,7 +2,7 @@
 
 import {
   bulkImportFoods,
-  downloadCsvTemplate,
+  downloadTemplate,
 } from "@/lib/api/foods";
 import { ImportFood, BulkImportError } from "@/lib/types";
 import Papa from "papaparse";
@@ -15,6 +15,61 @@ interface Props {
 }
 
 type Phase = "select" | "preview" | "duplicates";
+
+const CATEGORIAS = ["carbo", "proteina", "vegetal", "fruta", "outro"];
+
+// Normaliza um texto de cabeçalho: minúsculas, sem acento, sem pontuação.
+function normalizeKey(k: string): string {
+  return k
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]/g, "");
+}
+
+// Mapeia uma linha (com cabeçalhos em português OU em inglês) para os campos
+// internos do alimento. Aceita várias grafias para cada coluna.
+function mapRow(row: Record<string, unknown>): {
+  name: string;
+  category: string;
+  kcal: string;
+  protein: string;
+  carb: string;
+  fat: string;
+  fc: string;
+} {
+  const norm: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(row)) {
+    norm[normalizeKey(key)] = value;
+  }
+
+  const pick = (...keys: string[]): string => {
+    for (const k of keys) {
+      const v = norm[k];
+      if (v !== undefined && v !== null && String(v).trim() !== "") {
+        return String(v).trim();
+      }
+    }
+    return "";
+  };
+
+  return {
+    name: pick("nome", "name", "alimento"),
+    category: pick("categoria", "category", "cat"),
+    kcal: pick("kcalpor100g", "kcalper100g", "kcal", "calorias", "caloria"),
+    protein: pick("proteinag", "proteina", "protein", "proteingper100g"),
+    carb: pick("carboidratog", "carboidrato", "carbo", "carb", "carbgper100g"),
+    fat: pick("gordurag", "gordura", "fat", "fatgper100g"),
+    fc: pick("fatordecoccao", "fc", "fatorcoccao", "fator"),
+  };
+}
+
+// Converte texto numérico (aceitando vírgula decimal, ex.: "3,6") em número.
+function parseNum(v: string, fallback: number): number {
+  if (!v) return fallback;
+  const n = Number(v.replace(",", "."));
+  return Number.isFinite(n) && n >= 0 ? n : fallback;
+}
 
 interface PreviewRow {
   rowNumber: number;
@@ -54,11 +109,19 @@ export default function AlimentosImport({ onClose, onSuccess }: Props) {
       let foods: unknown[] = [];
 
       if (selectedFile.name.endsWith(".csv")) {
-        // Parse CSV
+        // Parse CSV — skipEmptyLines ignora linhas em branco; o separador
+        // (vírgula ou ponto-e-vírgula) é autodetectado pelo Papa.
         const text = await selectedFile.text();
-        const parsed = Papa.parse(text, { header: true });
+        const parsed = Papa.parse(text, {
+          header: true,
+          skipEmptyLines: true,
+        });
         foods = parsed.data.filter(
-          (row: unknown) => row && Object.values(row).some((v) => v)
+          (row: unknown) =>
+            row &&
+            Object.values(row as Record<string, unknown>).some(
+              (v) => v !== undefined && v !== null && String(v).trim() !== ""
+            )
         );
       } else if (
         selectedFile.name.endsWith(".xlsx") ||
@@ -86,15 +149,15 @@ export default function AlimentosImport({ onClose, onSuccess }: Props) {
 
       foods.forEach((food, idx) => {
         const row = idx + 2; // +2 porque linha 1 é header, e 0-indexed
-        const item = food as Record<string, unknown>;
-        const name = typeof item.name === "string" ? item.name.trim() : "";
-        const category = typeof item.category === "string" ? item.category.trim() : "";
+        const item = mapRow(food as Record<string, unknown>);
+        const name = item.name;
+        const category = item.category.toLowerCase();
 
-        if (!name || !["carbo", "proteina", "vegetal", "fruta", "outro"].includes(category)) {
+        if (!name || !CATEGORIAS.includes(category)) {
           const error: BulkImportError = {
             row,
             field: !name ? "name" : "category",
-            value: !name ? String(item.name || "") : category,
+            value: !name ? item.name : item.category,
             error: !name ? "Nome é obrigatório" : "Categoria inválida",
           };
           validationErrors.push(error);
@@ -108,11 +171,11 @@ export default function AlimentosImport({ onClose, onSuccess }: Props) {
         const importFood: ImportFood = {
           name,
           category: category as "carbo" | "proteina" | "vegetal" | "fruta" | "outro",
-          kcal_per_100g: Number(item.kcal_per_100g) || 0,
-          protein_g_per_100g: Number(item.protein_g_per_100g) || 0,
-          carb_g_per_100g: Number(item.carb_g_per_100g) || 0,
-          fat_g_per_100g: Number(item.fat_g_per_100g) || 0,
-          fc: Number(item.fc) || 1.0,
+          kcal_per_100g: parseNum(item.kcal, 0),
+          protein_g_per_100g: parseNum(item.protein, 0),
+          carb_g_per_100g: parseNum(item.carb, 0),
+          fat_g_per_100g: parseNum(item.fat, 0),
+          fc: parseNum(item.fc, 1),
         };
 
         previewRows.push({
@@ -241,7 +304,9 @@ export default function AlimentosImport({ onClose, onSuccess }: Props) {
             <div className="flex gap-2.5">
               <button
                 type="button"
-                onClick={downloadCsvTemplate}
+                onClick={() => {
+                  void downloadTemplate();
+                }}
                 className="flex-1 rounded-xl border border-[#E2D7C4] bg-white px-4 py-2.5 font-semibold text-slate-900 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
               >
                 📥 Baixar Template
