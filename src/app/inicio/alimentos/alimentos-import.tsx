@@ -18,6 +18,22 @@ type Phase = "select" | "preview" | "duplicates";
 
 const CATEGORIAS = ["carbo", "proteina", "vegetal", "fruta", "outro"];
 
+// Mapeamento de nomes amigáveis → código interno (normalizado)
+const CATEGORIA_MAPPER: Record<string, string> = {
+  carbo: "carbo",
+  carboidrato: "carbo",
+  proteina: "proteina",
+  vegetal: "vegetal",
+  fruta: "fruta",
+  outro: "outro",
+};
+
+// Converte um valor de categoria (amigável ou código) para código interno
+function normalizeCategoryValue(cat: string): string {
+  const normalized = normalizeKey(cat);
+  return CATEGORIA_MAPPER[normalized] || normalized;
+}
+
 // Normaliza um texto de cabeçalho: minúsculas, sem acento, sem pontuação.
 function normalizeKey(k: string): string {
   return k
@@ -151,7 +167,7 @@ export default function AlimentosImport({ onClose, onSuccess }: Props) {
         const row = idx + 2; // +2 porque linha 1 é header, e 0-indexed
         const item = mapRow(food as Record<string, unknown>);
         const name = item.name;
-        const category = item.category.toLowerCase();
+        const category = normalizeCategoryValue(item.category);
 
         if (!name || !CATEGORIAS.includes(category)) {
           const error: BulkImportError = {
