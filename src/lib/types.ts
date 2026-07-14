@@ -114,6 +114,8 @@ export interface EventRecipe {
   people_count: number;
   order_index: number;
   created_at: string;
+  // Escolhas resolvidas: choice_group → food_id selecionado. Ausente/vazio = 1ª opção.
+  choices?: Record<string, string>;
   recipe?: RecipeWithIngredients; // populated quando necessário
 }
 

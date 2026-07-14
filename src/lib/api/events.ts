@@ -13,7 +13,12 @@ export interface EventInput {
   title: string;
   event_date: string | null;
   base_people_count: number;
-  recipe_ids: Array<{ recipe_id: string; people_count: number; order_index: number }>;
+  recipe_ids: Array<{
+    recipe_id: string;
+    people_count: number;
+    order_index: number;
+    choices?: Record<string, string>;
+  }>;
 }
 
 export async function listEvents(): Promise<Event[]> {
@@ -112,9 +117,9 @@ export function calcularListaCompras(
       porAlimento[ing.food_id].grams += rawGrams;
     });
 
-    // Adiciona primeira opção de cada escolha
+    // Adiciona a opção escolhida de cada escolha (fallback: 1ª opção)
     escolhas.forEach((escolha) => {
-      const foodId = escolha.food_ids[0];
+      const foodId = er.choices?.[escolha.group] || escolha.food_ids[0];
       const food = alimentosMap[foodId];
       if (!food) return;
 
