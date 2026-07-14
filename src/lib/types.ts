@@ -95,3 +95,36 @@ export interface BulkImportResult {
   updated: number;
   errors?: BulkImportError[];
 }
+
+// Tipos para Refeições/Eventos (janta com 7 pessoas, almoço, etc.)
+export interface Event {
+  id: string;
+  user_id: string;
+  title: string;
+  event_date: string | null;
+  base_people_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EventRecipe {
+  id: string;
+  event_id: string;
+  recipe_id: string;
+  people_count: number;
+  order_index: number;
+  created_at: string;
+  recipe?: RecipeWithIngredients; // populated quando necessário
+}
+
+export interface EventWithRecipes extends Event {
+  event_recipes: EventRecipe[];
+}
+
+export interface ShoppingItem {
+  food_id: string;
+  food_name: string;
+  category: string;
+  quantity_grams: number; // em cru
+  quantity_kg: number; // conveniência
+}
