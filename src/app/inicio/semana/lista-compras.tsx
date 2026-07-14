@@ -10,6 +10,8 @@ const CATEGORIAS: { key: Food["category"]; label: string; emoji: string }[] = [
   { key: "carbo", label: "Carboidratos", emoji: "🍚" },
   { key: "vegetal", label: "Vegetais", emoji: "🥦" },
   { key: "fruta", label: "Frutas", emoji: "🍎" },
+  { key: "gordura", label: "Gorduras", emoji: "🧈" },
+  { key: "molho", label: "Molhos & Temperos", emoji: "🥫" },
   { key: "outro", label: "Outros", emoji: "📦" },
 ];
 

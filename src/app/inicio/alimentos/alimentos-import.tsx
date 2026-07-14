@@ -16,7 +16,15 @@ interface Props {
 
 type Phase = "select" | "preview" | "duplicates";
 
-const CATEGORIAS = ["carbo", "proteina", "vegetal", "fruta", "outro"];
+const CATEGORIAS = [
+  "carbo",
+  "proteina",
+  "vegetal",
+  "fruta",
+  "gordura",
+  "molho",
+  "outro",
+];
 
 // Mapeamento de nomes amigáveis → código interno (normalizado)
 const CATEGORIA_MAPPER: Record<string, string> = {
@@ -25,6 +33,10 @@ const CATEGORIA_MAPPER: Record<string, string> = {
   proteina: "proteina",
   vegetal: "vegetal",
   fruta: "fruta",
+  gordura: "gordura",
+  molho: "molho",
+  molhotempero: "molho",
+  tempero: "molho",
   outro: "outro",
 };
 
@@ -186,7 +198,7 @@ export default function AlimentosImport({ onClose, onSuccess }: Props) {
 
         const importFood: ImportFood = {
           name,
-          category: category as "carbo" | "proteina" | "vegetal" | "fruta" | "outro",
+          category: category as ImportFood["category"],
           kcal_per_100g: parseNum(item.kcal, 0),
           protein_g_per_100g: parseNum(item.protein, 0),
           carb_g_per_100g: parseNum(item.carb, 0),

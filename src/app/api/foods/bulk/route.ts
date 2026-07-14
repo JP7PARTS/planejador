@@ -2,7 +2,15 @@ import { createClient } from "@/lib/supabase/server";
 import { ImportFood, BulkImportResult, BulkImportError } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server";
 
-const VALID_CATEGORIES = ["carbo", "proteina", "vegetal", "fruta", "outro"];
+const VALID_CATEGORIES = [
+  "carbo",
+  "proteina",
+  "vegetal",
+  "fruta",
+  "gordura",
+  "molho",
+  "outro",
+];
 
 function normalizeNumber(v: unknown, defaultValue: number): number {
   if (v === null || v === undefined || v === "") return defaultValue;
@@ -41,7 +49,7 @@ function validateFood(food: unknown, row: number): { valid: boolean; food?: Impo
 
   const validatedFood: ImportFood = {
     name,
-    category: category as "carbo" | "proteina" | "vegetal" | "fruta" | "outro",
+    category: category as ImportFood["category"],
     kcal_per_100g: normalizeNumber(item.kcal_per_100g, 0),
     protein_g_per_100g: normalizeNumber(item.protein_g_per_100g, 0),
     carb_g_per_100g: normalizeNumber(item.carb_g_per_100g, 0),
