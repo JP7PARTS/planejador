@@ -68,6 +68,8 @@ export const CATEGORIAS_VALIDAS = [
   "proteina",
   "vegetal",
   "fruta",
+  "gordura",
+  "molho",
   "outro",
 ] as const;
 
@@ -77,6 +79,8 @@ export const CATEGORIAS_LABELS: Record<string, string> = {
   proteina: "Proteína",
   vegetal: "Vegetal",
   fruta: "Fruta",
+  gordura: "Gordura",
+  molho: "Molho/Tempero",
   outro: "Outro",
 };
 

@@ -17,8 +17,18 @@ const CATEGORIAS = {
   carbo: { label: "Carboidratos", emoji: "🍚", cor: "#BF922C" },
   vegetal: { label: "Vegetais", emoji: "🥦", cor: "#2E6B47" },
   fruta: { label: "Frutas", emoji: "🍎", cor: "#C0503A" },
+  gordura: { label: "Gorduras", emoji: "🧈", cor: "#B5852B" },
+  molho: { label: "Molhos & Temperos", emoji: "🥫", cor: "#9C4A3C" },
   outro: { label: "Outros", emoji: "🧂", cor: "#8A8172" },
 } as const;
+
+// Normaliza para busca: minúsculas, sem acento.
+function normalizarBusca(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "");
+}
 
 // Formata gramas: inteiro sem casas, senão 1 casa com vírgula (pt-BR).
 function fmtG(n: number): string {
@@ -31,6 +41,12 @@ export default function AlimentosList({ alimentos, onRefresh }: Props) {
   const [isImporting, setIsImporting] = useState(false);
   const [deletandoId, setDeletandoId] = useState<string | null>(null);
   const [erroDelete, setErroDelete] = useState<string | null>(null);
+  const [busca, setBusca] = useState("");
+
+  const buscaNorm = normalizarBusca(busca.trim());
+  const filtrados = buscaNorm
+    ? alimentos.filter((f) => normalizarBusca(f.name).includes(buscaNorm))
+    : alimentos;
 
   async function handleDelete(id: string) {
     if (!window.confirm("Tem certeza que quer deletar este alimento?")) {
@@ -58,7 +74,9 @@ export default function AlimentosList({ alimentos, onRefresh }: Props) {
             Banco de alimentos
           </h1>
           <p className="mt-1.5 text-[15px] text-slate-500 dark:text-slate-400">
-            {alimentos.length} alimentos · nutrição por 100g cru
+            {buscaNorm
+              ? `${filtrados.length} de ${alimentos.length} alimentos`
+              : `${alimentos.length} alimentos · nutrição por 100g cru`}
           </p>
         </div>
         <div className="flex gap-2.5">
@@ -83,9 +101,30 @@ export default function AlimentosList({ alimentos, onRefresh }: Props) {
         </div>
       )}
 
+      {/* Busca */}
+      <div className="relative">
+        <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+          🔍
+        </span>
+        <input
+          type="search"
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          placeholder="Pesquisar alimento…"
+          className="w-full rounded-[11px] border border-[#E2D7C4] bg-[#FCFAF5] py-2.5 pl-10 pr-3.5 text-[15px] text-slate-900 outline-none transition focus:border-emerald-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+        />
+      </div>
+
+      {buscaNorm && filtrados.length === 0 ? (
+        <div className="rounded-[20px] border border-dashed border-[#E7DECD] bg-white/60 p-10 text-center dark:border-slate-700 dark:bg-slate-900/40">
+          <p className="text-[15px] text-slate-500 dark:text-slate-400">
+            Nenhum alimento encontrado para “{busca.trim()}”.
+          </p>
+        </div>
+      ) : (
       <div className="flex flex-col gap-[22px]">
         {Object.entries(CATEGORIAS).map(([categoria, { label, emoji, cor }]) => {
-          const porCategoria = alimentos.filter((f) => f.category === categoria);
+          const porCategoria = filtrados.filter((f) => f.category === categoria);
           if (porCategoria.length === 0) return null;
 
           return (
@@ -144,6 +183,7 @@ export default function AlimentosList({ alimentos, onRefresh }: Props) {
           );
         })}
       </div>
+      )}
 
       {(editingFood || isCreating) && (
         <FoodForm

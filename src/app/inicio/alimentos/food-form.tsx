@@ -95,6 +95,8 @@ export default function FoodForm({ food, onClose, onSuccess }: Props) {
             <option value="carbo">Carboidrato</option>
             <option value="vegetal">Vegetal</option>
             <option value="fruta">Fruta</option>
+            <option value="gordura">Gordura</option>
+            <option value="molho">Molho/Tempero</option>
             <option value="outro">Outro</option>
           </select>
 

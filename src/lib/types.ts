@@ -4,7 +4,7 @@ export interface Food {
   id: string;
   user_id: string;
   name: string;
-  category: "carbo" | "proteina" | "vegetal" | "fruta" | "outro";
+  category: "carbo" | "proteina" | "vegetal" | "fruta" | "gordura" | "molho" | "outro";
   kcal_per_100g: number;
   protein_g_per_100g: number;
   carb_g_per_100g: number;
@@ -74,7 +74,7 @@ export interface RecipeWithIngredients extends Recipe {
 // Tipos para importação em massa de alimentos
 export interface ImportFood {
   name: string;
-  category: "carbo" | "proteina" | "vegetal" | "fruta" | "outro";
+  category: "carbo" | "proteina" | "vegetal" | "fruta" | "gordura" | "molho" | "outro";
   kcal_per_100g?: number;
   protein_g_per_100g?: number;
   carb_g_per_100g?: number;
