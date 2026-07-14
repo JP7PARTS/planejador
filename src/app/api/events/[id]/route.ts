@@ -86,7 +86,8 @@ export async function PUT(
     }
 
     const body = await req.json();
-    const { title, event_date, base_people_count, recipe_ids } = body;
+    const { title, event_date, adults, kids_older, kids_young, recipe_ids } =
+      body;
 
     if (!title || !title.trim()) {
       return NextResponse.json(
@@ -102,13 +103,28 @@ export async function PUT(
       );
     }
 
+    const nAdults = Math.max(0, Math.floor(Number(adults) || 0));
+    const nKidsOlder = Math.max(0, Math.floor(Number(kids_older) || 0));
+    const nKidsYoung = Math.max(0, Math.floor(Number(kids_young) || 0));
+    const total = nAdults + nKidsOlder + nKidsYoung;
+
+    if (total < 1) {
+      return NextResponse.json(
+        { error: "Informe pelo menos uma pessoa" },
+        { status: 400 }
+      );
+    }
+
     // Atualizar evento
     const { error: updateError } = await supabase
       .from("events")
       .update({
         title: title.trim(),
         event_date: event_date || null,
-        base_people_count: base_people_count || 1,
+        adults: nAdults,
+        kids_older: nKidsOlder,
+        kids_young: nKidsYoung,
+        base_people_count: total,
         updated_at: new Date().toISOString(),
       })
       .eq("id", id);
@@ -123,7 +139,6 @@ export async function PUT(
       (
         item: {
           recipe_id: string;
-          people_count: number;
           order_index: number;
           choices?: Record<string, string>;
         },
@@ -131,7 +146,6 @@ export async function PUT(
       ) => ({
         event_id: id,
         recipe_id: item.recipe_id,
-        people_count: item.people_count || base_people_count || 1,
         order_index: item.order_index ?? idx,
         choices: item.choices || {},
       })

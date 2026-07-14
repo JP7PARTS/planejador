@@ -10,6 +10,7 @@ import {
   deleteEvent,
   calcularListaCompras,
   tempoMaximo,
+  porcoesEfetivas,
 } from "@/lib/api/events";
 import { ShoppingListItem } from "@/lib/calc";
 import ListaCompras from "../../../semana/lista-compras";
@@ -21,6 +22,10 @@ function formatDate(dateStr: string | null): string {
   const day = date.getDate();
   const monthShort = date.toLocaleDateString("pt-BR", { month: "short" });
   return `${day} ${monthShort}`;
+}
+
+function fmt(n: number): string {
+  return Number.isInteger(n) ? String(n) : n.toFixed(1).replace(".", ",");
 }
 
 export default function VerRefeicaoPage() {
@@ -70,10 +75,16 @@ export default function VerRefeicaoPage() {
 
   const eventRecipes = evento?.event_recipes ?? [];
 
-  // Lista de compras consolidada (já aplica as escolhas de carne etc.).
+  // Porções equivalentes de adulto (adultos + crianças com seus fatores).
+  const porcoes = evento
+    ? porcoesEfetivas(evento.adults, evento.kids_older, evento.kids_young)
+    : 0;
+
+  // Lista de compras consolidada (aplica as escolhas de carne e escala pelas porções).
   const itensCompra: ShoppingListItem[] = calcularListaCompras(
     eventRecipes,
-    foods
+    foods,
+    porcoes
   ).map((item) => ({
     name: item.food_name,
     grams: item.quantity_grams,
@@ -117,9 +128,18 @@ export default function VerRefeicaoPage() {
               </h1>
               <p className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[14.5px] text-slate-500 dark:text-slate-400">
                 <span>
-                  {evento.base_people_count} pessoa
-                  {evento.base_people_count === 1 ? "" : "s"}
+                  👥 {evento.adults} adulto{evento.adults === 1 ? "" : "s"}
+                  {evento.kids_older > 0 &&
+                    ` · ${evento.kids_older} criança${
+                      evento.kids_older === 1 ? "" : "s"
+                    } 7–12`}
+                  {evento.kids_young > 0 &&
+                    ` · ${evento.kids_young} criança${
+                      evento.kids_young === 1 ? "" : "s"
+                    } até 6`}
                 </span>
+                <span aria-hidden>·</span>
+                <span>≈ {fmt(porcoes)} porç{porcoes === 1 ? "ão" : "ões"}</span>
                 {evento.event_date && (
                   <>
                     <span aria-hidden>·</span>
