@@ -102,7 +102,10 @@ export interface Event {
   user_id: string;
   title: string;
   event_date: string | null;
-  base_people_count: number;
+  base_people_count: number; // total de pessoas (adultos + crianças), p/ exibição
+  adults: number;
+  kids_older: number; // 7–12 anos (×0,6)
+  kids_young: number; // até 6 anos (×0,4)
   created_at: string;
   updated_at: string;
 }

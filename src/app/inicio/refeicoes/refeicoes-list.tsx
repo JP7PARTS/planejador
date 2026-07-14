@@ -21,6 +21,18 @@ function formatDate(dateStr: string | null): string {
   return `${day} ${monthShort}`;
 }
 
+// Resumo curto da composição: "2 adultos · 1 criança".
+function descreverPessoas(e: Event): string {
+  const adultos = e.adults ?? e.base_people_count ?? 0;
+  const criancas = (e.kids_older ?? 0) + (e.kids_young ?? 0);
+  const partes: string[] = [];
+  partes.push(`${adultos} adulto${adultos === 1 ? "" : "s"}`);
+  if (criancas > 0) {
+    partes.push(`${criancas} criança${criancas === 1 ? "" : "s"}`);
+  }
+  return partes.join(" · ");
+}
+
 export default function RefeicoesList({ events, recipes, foods }: Props) {
   const [isCreating, setIsCreating] = useState(false);
   const [editing, setEditing] = useState<Event | null>(null);
@@ -112,7 +124,7 @@ export default function RefeicoesList({ events, recipes, foods }: Props) {
                     🍽️ {e.title}
                   </p>
                   <p className="mt-1 text-[12.5px] text-slate-500 dark:text-slate-400">
-                    {e.base_people_count} pessoa{e.base_people_count === 1 ? "" : "s"}
+                    {descreverPessoas(e)}
                   </p>
                 </div>
                 {e.event_date && (

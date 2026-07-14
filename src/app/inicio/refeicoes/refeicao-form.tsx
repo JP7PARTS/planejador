@@ -1,14 +1,13 @@
 "use client";
 
 import { Event, RecipeWithIngredients, Food } from "@/lib/types";
-import { createEvent, updateEvent, getEvent, calcularListaCompras, tempoMaximo } from "@/lib/api/events";
+import { createEvent, updateEvent, getEvent, calcularListaCompras, tempoMaximo, porcoesEfetivas } from "@/lib/api/events";
 import { agruparIngredientes } from "@/lib/api/recipes";
 import { useState, useMemo, useEffect, FormEvent } from "react";
 import RefeicaoRecipePicker from "./refeicao-recipe-picker";
 
 interface LinhaReceita {
   recipe_id: string;
-  people_count: number;
   choices: Record<number, string>; // choice_group → food_id escolhido
 }
 
@@ -36,11 +35,17 @@ export default function RefeicaoForm({
 
   const [title, setTitle] = useState(event?.title ?? "");
   const [eventDate, setEventDate] = useState(event?.event_date ?? "");
-  const [basePeopleCount, setBasePeopleCount] = useState(
-    String(event?.base_people_count ?? 7)
-  );
+  const [adults, setAdults] = useState(String(event?.adults ?? 2));
+  const [kidsOlder, setKidsOlder] = useState(String(event?.kids_older ?? 0));
+  const [kidsYoung, setKidsYoung] = useState(String(event?.kids_young ?? 0));
   const [linhas, setLinhas] = useState<LinhaReceita[]>([]);
   const [pickerAberto, setPickerAberto] = useState(false);
+
+  const nAdults = Math.max(0, Math.floor(Number(adults) || 0));
+  const nKidsOlder = Math.max(0, Math.floor(Number(kidsOlder) || 0));
+  const nKidsYoung = Math.max(0, Math.floor(Number(kidsYoung) || 0));
+  const totalPessoas = nAdults + nKidsOlder + nKidsYoung;
+  const porcoes = porcoesEfetivas(nAdults, nKidsOlder, nKidsYoung);
 
   // Ao editar, carrega as receitas realmente salvas neste evento.
   useEffect(() => {
@@ -60,7 +65,6 @@ export default function RefeicaoForm({
             });
             return {
               recipe_id: er.recipe_id,
-              people_count: er.people_count,
               choices,
             };
           });
@@ -93,7 +97,7 @@ export default function RefeicaoForm({
         id: "",
         event_id: "",
         recipe_id: linha.recipe_id,
-        people_count: linha.people_count,
+        people_count: 0,
         order_index: 0,
         created_at: "",
         choices: linha.choices as Record<string, string>,
@@ -102,21 +106,15 @@ export default function RefeicaoForm({
       .filter((er) => er.recipe);
   }, [linhas, recipesMap]);
 
-  // Lista de compras consolidada
+  // Lista de compras consolidada (escala pelas porções equivalentes)
   const listaCompras = useMemo(() => {
-    return calcularListaCompras(eventRecipesComReceitas, foods);
-  }, [eventRecipesComReceitas, foods]);
+    return calcularListaCompras(eventRecipesComReceitas, foods, porcoes);
+  }, [eventRecipesComReceitas, foods, porcoes]);
 
   // Tempo máximo
   const tempoTotal = useMemo(() => {
     return tempoMaximo(eventRecipesComReceitas);
   }, [eventRecipesComReceitas]);
-
-  function atualizarPeopleCount(idx: number, value: number) {
-    setLinhas((prev) =>
-      prev.map((l, i) => (i === idx ? { ...l, people_count: value } : l))
-    );
-  }
 
   function removerLinha(idx: number) {
     setLinhas((prev) => prev.filter((_, i) => i !== idx));
@@ -135,10 +133,7 @@ export default function RefeicaoForm({
         iniciais[e.group] = e.food_ids[0];
       });
     }
-    setLinhas((prev) => [
-      ...prev,
-      { recipe_id: recipeId, people_count: Number(basePeopleCount), choices: iniciais },
-    ]);
+    setLinhas((prev) => [...prev, { recipe_id: recipeId, choices: iniciais }]);
     setPickerAberto(false);
   }
 
@@ -164,13 +159,19 @@ export default function RefeicaoForm({
       return;
     }
 
+    if (totalPessoas < 1) {
+      setErro("Informe pelo menos uma pessoa");
+      return;
+    }
+
     const payload = {
       title: title.trim(),
       event_date: eventDate || null,
-      base_people_count: Number(basePeopleCount) || 1,
+      adults: nAdults,
+      kids_older: nKidsOlder,
+      kids_young: nKidsYoung,
       recipe_ids: linhas.map((l, idx) => ({
         recipe_id: l.recipe_id,
-        people_count: l.people_count,
         order_index: idx,
         choices: l.choices as Record<string, string>,
       })),
@@ -221,30 +222,74 @@ export default function RefeicaoForm({
               placeholder="Ex.: Janta com amigos"
             />
 
-            <div className="mb-4 grid grid-cols-2 gap-2.5">
-              <div>
-                <label className="mb-1.5 block text-[13px] font-semibold">
-                  Data (opcional)
-                </label>
-                <input
-                  type="date"
-                  value={eventDate}
-                  onChange={(e) => setEventDate(e.target.value)}
-                  className={bigInput}
-                />
+            <div className="mb-4">
+              <label className="mb-1.5 block text-[13px] font-semibold">
+                Data (opcional)
+              </label>
+              <input
+                type="date"
+                value={eventDate}
+                onChange={(e) => setEventDate(e.target.value)}
+                className={bigInput}
+              />
+            </div>
+
+            {/* Quem vai comer (adultos + crianças = porções equivalentes) */}
+            <div className="mb-4">
+              <label className="mb-1.5 block text-[13px] font-semibold">
+                Quem vai comer
+              </label>
+              <div className="grid grid-cols-3 gap-2.5">
+                <div>
+                  <input
+                    type="number"
+                    min="0"
+                    value={adults}
+                    onChange={(e) => setAdults(e.target.value)}
+                    className={`${bigInput} text-center`}
+                    aria-label="Adultos"
+                  />
+                  <p className="mt-1 text-center text-[11.5px] text-slate-500 dark:text-slate-400">
+                    Adultos
+                  </p>
+                </div>
+                <div>
+                  <input
+                    type="number"
+                    min="0"
+                    value={kidsOlder}
+                    onChange={(e) => setKidsOlder(e.target.value)}
+                    className={`${bigInput} text-center`}
+                    aria-label="Crianças de 7 a 12 anos"
+                  />
+                  <p className="mt-1 text-center text-[11.5px] text-slate-500 dark:text-slate-400">
+                    Crianças 7–12
+                  </p>
+                </div>
+                <div>
+                  <input
+                    type="number"
+                    min="0"
+                    value={kidsYoung}
+                    onChange={(e) => setKidsYoung(e.target.value)}
+                    className={`${bigInput} text-center`}
+                    aria-label="Crianças até 6 anos"
+                  />
+                  <p className="mt-1 text-center text-[11.5px] text-slate-500 dark:text-slate-400">
+                    Crianças até 6
+                  </p>
+                </div>
               </div>
-              <div>
-                <label className="mb-1.5 block text-[13px] font-semibold">
-                  Quantas pessoas
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  value={basePeopleCount}
-                  onChange={(e) => setBasePeopleCount(e.target.value)}
-                  className={bigInput}
-                />
-              </div>
+              <p className="mt-2 text-[12px] text-slate-500 dark:text-slate-400">
+                👥 {totalPessoas} pessoa{totalPessoas === 1 ? "" : "s"} ·{" "}
+                <strong className="text-slate-700 dark:text-slate-200">
+                  ≈ {fmt(porcoes)} porç{porcoes === 1 ? "ão" : "ões"}
+                </strong>
+                <span className="text-slate-400">
+                  {" "}
+                  (criança 7–12 conta 0,6 · até 6 conta 0,4)
+                </span>
+              </p>
             </div>
 
             {/* Receitas */}
@@ -279,14 +324,6 @@ export default function RefeicaoForm({
                       <div className="min-w-0 flex-1">
                         <p className="text-[14px] font-semibold">{r?.title}</p>
                       </div>
-                      <input
-                        type="number"
-                        min="1"
-                        value={l.people_count}
-                        onChange={(e) => atualizarPeopleCount(idx, Number(e.target.value))}
-                        className="w-[60px] rounded-[9px] border border-[#E2D7C4] bg-white px-2 py-1.5 text-center text-sm font-semibold text-slate-900 outline-none transition focus:border-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                        title="Pessoas"
-                      />
                       <button
                         type="button"
                         onClick={() => removerLinha(idx)}

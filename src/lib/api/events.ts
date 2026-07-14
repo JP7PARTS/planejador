@@ -9,13 +9,31 @@ import {
 import { calculateWeekItem } from "@/lib/calc";
 import { agruparIngredientes } from "@/lib/api/recipes";
 
+// Fatores de porção por faixa etária (pesquisados pelo usuário).
+export const FATOR_CRIANCA_MAIOR = 0.6; // 7–12 anos
+export const FATOR_CRIANCA_PEQUENA = 0.4; // até 6 anos
+
+// Converte a composição de pessoas em "porções equivalentes" de adulto.
+export function porcoesEfetivas(
+  adults: number,
+  kidsOlder: number,
+  kidsYoung: number
+): number {
+  return (
+    (adults || 0) +
+    (kidsOlder || 0) * FATOR_CRIANCA_MAIOR +
+    (kidsYoung || 0) * FATOR_CRIANCA_PEQUENA
+  );
+}
+
 export interface EventInput {
   title: string;
   event_date: string | null;
-  base_people_count: number;
+  adults: number;
+  kids_older: number;
+  kids_young: number;
   recipe_ids: Array<{
     recipe_id: string;
-    people_count: number;
     order_index: number;
     choices?: Record<string, string>;
   }>;
@@ -80,11 +98,13 @@ export async function deleteEvent(id: string): Promise<void> {
   }
 }
 
-// Calcula a lista de compras consolidada de um evento
-// (para cada ingrediente de cada receita, consolida por alimento em gramas cru)
+// Calcula a lista de compras consolidada de um evento. `porcoes` é o número de
+// porções equivalentes de adulto (ver porcoesEfetivas), igual para todos os pratos.
+// Para cada ingrediente, consolida por alimento em gramas cru.
 export function calcularListaCompras(
   eventRecipes: EventRecipe[],
-  alimentos: Food[]
+  alimentos: Food[],
+  porcoes: number
 ): ShoppingItem[] {
   const alimentosMap: Record<string, Food> = {};
   alimentos.forEach((f) => (alimentosMap[f.id] = f));
@@ -104,7 +124,7 @@ export function calcularListaCompras(
       const food = alimentosMap[ing.food_id];
       if (!food) return;
 
-      const cookedGrams = ing.cooked_grams_per_marmita * er.people_count;
+      const cookedGrams = ing.cooked_grams_per_marmita * porcoes;
       const rawGrams = cookedGrams / food.fc;
 
       if (!porAlimento[ing.food_id]) {
@@ -123,7 +143,7 @@ export function calcularListaCompras(
       const food = alimentosMap[foodId];
       if (!food) return;
 
-      const cookedGrams = escolha.cooked_grams_per_marmita * er.people_count;
+      const cookedGrams = escolha.cooked_grams_per_marmita * porcoes;
       const rawGrams = cookedGrams / food.fc;
 
       if (!porAlimento[foodId]) {
