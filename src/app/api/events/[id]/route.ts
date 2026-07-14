@@ -35,7 +35,7 @@ export async function GET(
       .from("event_recipes")
       .select(`
         *,
-        recipes:recipe_id(
+        recipe:recipe_id(
           *,
           ingredients:recipe_ingredients(*)
         )

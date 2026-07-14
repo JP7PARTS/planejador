@@ -90,7 +90,7 @@ export function calcularListaCompras(
   > = {};
 
   eventRecipes.forEach((er) => {
-    if (!er.recipe) return;
+    if (!er.recipe || !er.recipe.ingredients) return;
 
     const { fixos, escolhas } = agruparIngredientes(er.recipe.ingredients);
 

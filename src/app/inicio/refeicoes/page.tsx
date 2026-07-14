@@ -21,10 +21,10 @@ export default async function RefeicoesPager() {
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
-  // Carregar receitas (para mostrar ao criar)
+  // Carregar receitas com ingredientes (para calcular lista de compras ao criar)
   const { data: recipes } = await supabase
     .from("recipes")
-    .select("*")
+    .select("*, ingredients:recipe_ingredients(*)")
     .eq("user_id", user.id)
     .order("title", { ascending: true });
 
