@@ -2,12 +2,14 @@
 
 import { Event, RecipeWithIngredients, Food } from "@/lib/types";
 import { createEvent, updateEvent, getEvent, calcularListaCompras, agruparReceitasPorTitulo, tempoMaximo } from "@/lib/api/events";
+import { agruparIngredientes } from "@/lib/api/recipes";
 import { useState, useMemo, useEffect, FormEvent } from "react";
 import RefeicaoRecipePicker from "./refeicao-recipe-picker";
 
 interface LinhaReceita {
   recipe_id: string;
   people_count: number;
+  choices: Record<number, string>; // choice_group → food_id escolhido
 }
 
 interface Props {
@@ -50,10 +52,18 @@ export default function RefeicaoForm({
         const carregadas = (completo.event_recipes ?? [])
           .slice()
           .sort((a, b) => a.order_index - b.order_index)
-          .map((er) => ({
-            recipe_id: er.recipe_id,
-            people_count: er.people_count,
-          }));
+          .map((er) => {
+            // Normaliza as chaves (JSON traz string) para number.
+            const choices: Record<number, string> = {};
+            Object.entries(er.choices ?? {}).forEach(([g, fid]) => {
+              choices[Number(g)] = fid as string;
+            });
+            return {
+              recipe_id: er.recipe_id,
+              people_count: er.people_count,
+              choices,
+            };
+          });
         setLinhas(carregadas);
       })
       .catch((err) => {
@@ -70,6 +80,12 @@ export default function RefeicaoForm({
     return m;
   }, [recipes]);
 
+  const foodsMap = useMemo(() => {
+    const m: Record<string, Food> = {};
+    foods.forEach((f) => (m[f.id] = f));
+    return m;
+  }, [foods]);
+
   // Constrói array de EventRecipe com recipes populadas
   const eventRecipesComReceitas = useMemo(() => {
     return linhas
@@ -80,6 +96,7 @@ export default function RefeicaoForm({
         people_count: linha.people_count,
         order_index: 0,
         created_at: "",
+        choices: linha.choices as Record<string, string>,
         recipe: recipesMap[linha.recipe_id],
       }))
       .filter((er) => er.recipe);
@@ -115,11 +132,27 @@ export default function RefeicaoForm({
       setErro("Esta receita já foi adicionada");
       return;
     }
+    // Pré-seleciona a 1ª opção de cada escolha da receita.
+    const receita = recipesMap[recipeId];
+    const iniciais: Record<number, string> = {};
+    if (receita) {
+      agruparIngredientes(receita.ingredients).escolhas.forEach((e) => {
+        iniciais[e.group] = e.food_ids[0];
+      });
+    }
     setLinhas((prev) => [
       ...prev,
-      { recipe_id: recipeId, people_count: Number(basePeopleCount) },
+      { recipe_id: recipeId, people_count: Number(basePeopleCount), choices: iniciais },
     ]);
     setPickerAberto(false);
+  }
+
+  function atualizarChoice(idx: number, group: number, foodId: string) {
+    setLinhas((prev) =>
+      prev.map((l, i) =>
+        i === idx ? { ...l, choices: { ...l.choices, [group]: foodId } } : l
+      )
+    );
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -144,6 +177,7 @@ export default function RefeicaoForm({
         recipe_id: l.recipe_id,
         people_count: l.people_count,
         order_index: idx,
+        choices: l.choices as Record<string, string>,
       })),
     };
 
@@ -238,29 +272,54 @@ export default function RefeicaoForm({
             <div className="mb-4 flex flex-col gap-2">
               {linhas.map((l, idx) => {
                 const r = recipesMap[l.recipe_id];
+                const escolhas = r
+                  ? agruparIngredientes(r.ingredients).escolhas
+                  : [];
                 return (
                   <div
                     key={idx}
-                    className="flex items-center gap-2 rounded-[11px] border border-[#E2D7C4] bg-[#FCFAF5] p-3 dark:border-slate-700 dark:bg-slate-800"
+                    className="flex flex-col gap-2 rounded-[11px] border border-[#E2D7C4] bg-[#FCFAF5] p-3 dark:border-slate-700 dark:bg-slate-800"
                   >
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[14px] font-semibold">{r?.title}</p>
+                    <div className="flex items-center gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[14px] font-semibold">{r?.title}</p>
+                      </div>
+                      <input
+                        type="number"
+                        min="1"
+                        value={l.people_count}
+                        onChange={(e) => atualizarPeopleCount(idx, Number(e.target.value))}
+                        className="w-[60px] rounded-[9px] border border-[#E2D7C4] bg-white px-2 py-1.5 text-center text-sm font-semibold text-slate-900 outline-none transition focus:border-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                        title="Pessoas"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removerLinha(idx)}
+                        className="shrink-0 rounded-[9px] border border-[#F0DAD2] bg-[#FCF4F1] px-2.5 py-1.5 text-[13px] text-rose-600 transition hover:brightness-95 dark:border-rose-900 dark:bg-rose-950/20"
+                      >
+                        ✕
+                      </button>
                     </div>
-                    <input
-                      type="number"
-                      min="1"
-                      value={l.people_count}
-                      onChange={(e) => atualizarPeopleCount(idx, Number(e.target.value))}
-                      className="w-[60px] rounded-[9px] border border-[#E2D7C4] bg-white px-2 py-1.5 text-center text-sm font-semibold text-slate-900 outline-none transition focus:border-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                      title="Pessoas"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removerLinha(idx)}
-                      className="shrink-0 rounded-[9px] border border-[#F0DAD2] bg-[#FCF4F1] px-2.5 py-1.5 text-[13px] text-rose-600 transition hover:brightness-95 dark:border-rose-900 dark:bg-rose-950/20"
-                    >
-                      ✕
-                    </button>
+
+                    {/* Ingredientes "à escolha" (ex.: qual carne) */}
+                    {escolhas.map((e) => (
+                      <div key={e.group} className="flex items-center gap-2 pl-0.5">
+                        <label className="w-[70px] shrink-0 text-[12.5px] font-semibold text-slate-600 dark:text-slate-300">
+                          {e.label}
+                        </label>
+                        <select
+                          value={l.choices[e.group] ?? e.food_ids[0]}
+                          onChange={(ev) => atualizarChoice(idx, e.group, ev.target.value)}
+                          className="min-w-0 flex-1 cursor-pointer rounded-[9px] border border-[#E2D7C4] bg-white px-2.5 py-1.5 text-[13px] text-slate-900 outline-none transition focus:border-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                        >
+                          {e.food_ids.map((fid) => (
+                            <option key={fid} value={fid}>
+                              {foodsMap[fid]?.name ?? "—"}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    ))}
                   </div>
                 );
               })}

@@ -74,13 +74,19 @@ export async function POST(req: NextRequest) {
     // Adicionar as receitas ao evento
     const eventRecipesData = recipe_ids.map(
       (
-        item: { recipe_id: string; people_count: number; order_index: number },
+        item: {
+          recipe_id: string;
+          people_count: number;
+          order_index: number;
+          choices?: Record<string, string>;
+        },
         idx: number
       ) => ({
         event_id: event.id,
         recipe_id: item.recipe_id,
         people_count: item.people_count || base_people_count || 1,
         order_index: item.order_index ?? idx,
+        choices: item.choices || {},
       })
     );
 
