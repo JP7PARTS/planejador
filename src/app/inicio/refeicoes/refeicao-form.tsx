@@ -1,8 +1,8 @@
 "use client";
 
 import { Event, RecipeWithIngredients, Food } from "@/lib/types";
-import { createEvent, updateEvent, calcularListaCompras, agruparReceitasPorTitulo, tempoMaximo } from "@/lib/api/events";
-import { useState, useMemo, FormEvent } from "react";
+import { createEvent, updateEvent, getEvent, calcularListaCompras, agruparReceitasPorTitulo, tempoMaximo } from "@/lib/api/events";
+import { useState, useMemo, useEffect, FormEvent } from "react";
 import RefeicaoRecipePicker from "./refeicao-recipe-picker";
 
 interface LinhaReceita {
@@ -37,10 +37,32 @@ export default function RefeicaoForm({
   const [basePeopleCount, setBasePeopleCount] = useState(
     String(event?.base_people_count ?? 7)
   );
-  const [linhas, setLinhas] = useState<LinhaReceita[]>(
-    event ? recipes.map((r) => ({ recipe_id: r.id, people_count: event.base_people_count })) : []
-  );
+  const [linhas, setLinhas] = useState<LinhaReceita[]>([]);
   const [pickerAberto, setPickerAberto] = useState(false);
+
+  // Ao editar, carrega as receitas realmente salvas neste evento.
+  useEffect(() => {
+    if (!event) return;
+    let cancelado = false;
+    getEvent(event.id)
+      .then((completo) => {
+        if (cancelado) return;
+        const carregadas = (completo.event_recipes ?? [])
+          .slice()
+          .sort((a, b) => a.order_index - b.order_index)
+          .map((er) => ({
+            recipe_id: er.recipe_id,
+            people_count: er.people_count,
+          }));
+        setLinhas(carregadas);
+      })
+      .catch((err) => {
+        setErro(err instanceof Error ? err.message : "Erro ao carregar refeição");
+      });
+    return () => {
+      cancelado = true;
+    };
+  }, [event]);
 
   const recipesMap = useMemo(() => {
     const m: Record<string, RecipeWithIngredients> = {};
