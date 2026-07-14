@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Hanken_Grotesk } from "next/font/google";
 import "./globals.css";
+import ServiceWorkerRegister from "./sw-register";
 
 // Fonte de títulos (display) — quente e amigável.
 const bricolage = Bricolage_Grotesque({
@@ -22,6 +23,16 @@ export const metadata: Metadata = {
   title: "Planejador de Marmitas",
   description:
     "Planeje as marmitas da semana, calcule calorias e macronutrientes e descubra quanto comprar de alimento cru.",
+  applicationName: "Marmita",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Marmita",
+  },
+  icons: {
+    icon: "/icon-192.png",
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export const viewport: Viewport = {
@@ -48,6 +59,7 @@ export default function RootLayout({
             __html: `(function(){try{var t=localStorage.getItem("theme")||(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");document.documentElement.dataset.theme=t;}catch(e){document.documentElement.dataset.theme="light";}})();`,
           }}
         />
+        <ServiceWorkerRegister />
         {children}
       </body>
     </html>
