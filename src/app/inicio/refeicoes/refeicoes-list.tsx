@@ -3,7 +3,9 @@
 import { Event, RecipeWithIngredients, Food } from "@/lib/types";
 import { deleteEvent } from "@/lib/api/events";
 import RefeicaoForm from "./refeicao-form";
-import { useMemo, useState } from "react";
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 interface Props {
   events: Event[];
@@ -24,12 +26,21 @@ export default function RefeicoesList({ events, recipes, foods }: Props) {
   const [editing, setEditing] = useState<Event | null>(null);
   const [deletandoId, setDeletandoId] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
+  const searchParams = useSearchParams();
 
   const foodsMap = useMemo(() => {
     const m: Record<string, Food> = {};
     foods.forEach((f) => (m[f.id] = f));
     return m;
   }, [foods]);
+
+  // Abre o modal de edição automaticamente ao vir da página de detalhe (?edit=<id>).
+  useEffect(() => {
+    const editId = searchParams.get("edit");
+    if (!editId) return;
+    const alvo = events.find((e) => e.id === editId);
+    if (alvo) setEditing(alvo);
+  }, [searchParams, events]);
 
   async function handleDelete(id: string) {
     if (!window.confirm("Tem certeza que quer deletar esta refeição?")) return;
@@ -92,9 +103,12 @@ export default function RefeicoesList({ events, recipes, foods }: Props) {
               className="flex flex-col rounded-[16px] border border-[#EADFCD] bg-white p-4 dark:border-slate-800 dark:bg-slate-900"
               style={{ borderLeft: "4px solid #2E6B47" }}
             >
-              <div className="flex items-start justify-between gap-2">
+              <Link
+                href={`/inicio/refeicoes/ver/${e.id}`}
+                className="group flex items-start justify-between gap-2"
+              >
                 <div className="min-w-0 flex-1">
-                  <p className="text-[16px] font-bold [font-family:var(--font-display)]">
+                  <p className="text-[16px] font-bold [font-family:var(--font-display)] group-hover:text-emerald-700 dark:group-hover:text-emerald-400">
                     🍽️ {e.title}
                   </p>
                   <p className="mt-1 text-[12.5px] text-slate-500 dark:text-slate-400">
@@ -106,9 +120,15 @@ export default function RefeicoesList({ events, recipes, foods }: Props) {
                     {formatDate(e.event_date)}
                   </span>
                 )}
-              </div>
+              </Link>
 
               <div className="mt-3 flex gap-2">
+                <Link
+                  href={`/inicio/refeicoes/ver/${e.id}`}
+                  className="flex-1 rounded-[9px] bg-[#E9F0E7] py-2 text-center text-[13px] font-semibold text-emerald-700 transition hover:brightness-95 dark:bg-emerald-950/40 dark:text-emerald-300"
+                >
+                  👁️ Ver
+                </Link>
                 <button
                   onClick={() => setEditing(e)}
                   className="flex-1 rounded-[9px] border border-[#E7DECD] bg-[#FCFAF5] py-2 text-[13px] font-semibold transition hover:brightness-95 dark:border-slate-700 dark:bg-slate-800"
