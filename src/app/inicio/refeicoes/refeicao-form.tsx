@@ -1,7 +1,7 @@
 "use client";
 
 import { Event, RecipeWithIngredients, Food } from "@/lib/types";
-import { createEvent, updateEvent, getEvent, calcularListaCompras, agruparReceitasPorTitulo, tempoMaximo } from "@/lib/api/events";
+import { createEvent, updateEvent, getEvent, calcularListaCompras, tempoMaximo } from "@/lib/api/events";
 import { agruparIngredientes } from "@/lib/api/recipes";
 import { useState, useMemo, useEffect, FormEvent } from "react";
 import RefeicaoRecipePicker from "./refeicao-recipe-picker";
@@ -106,11 +106,6 @@ export default function RefeicaoForm({
   const listaCompras = useMemo(() => {
     return calcularListaCompras(eventRecipesComReceitas, foods);
   }, [eventRecipesComReceitas, foods]);
-
-  // Modo de preparo
-  const receitasAgrupadasPorTitulo = useMemo(() => {
-    return agruparReceitasPorTitulo(eventRecipesComReceitas);
-  }, [eventRecipesComReceitas]);
 
   // Tempo máximo
   const tempoTotal = useMemo(() => {
@@ -351,32 +346,16 @@ export default function RefeicaoForm({
                   )}
                 </div>
 
-                {receitasAgrupadasPorTitulo.length > 0 && (
-                  <div className="mt-2 border-t border-[#E2D7C4] pt-2 dark:border-slate-700">
-                    <p className="text-[12px] font-semibold text-slate-600 dark:text-slate-300">
-                      📝 MODO DE PREPARO
-                    </p>
-                    <div className="mt-1 flex flex-col gap-1.5">
-                      {receitasAgrupadasPorTitulo.map((r) => (
-                        <div key={r.title} className="text-[11px]">
-                          <p className="font-semibold text-slate-700 dark:text-slate-200">
-                            {r.title}
-                          </p>
-                          <p className="text-slate-500 dark:text-slate-400">
-                            {r.steps.length} passo{r.steps.length === 1 ? "" : "s"}
-                            {r.total_time_min && ` · ${r.total_time_min} min`}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
                 {tempoTotal && (
                   <p className="mt-2 text-[12px] text-slate-600 dark:text-slate-300">
                     ⏱️ Tempo total: <strong>{tempoTotal} min</strong>
                   </p>
                 )}
+
+                <p className="mt-2 border-t border-[#E2D7C4] pt-2 text-[11.5px] italic text-slate-400 dark:border-slate-700 dark:text-slate-500">
+                  📝 O modo de preparo completo aparece ao abrir a refeição
+                  salva.
+                </p>
               </div>
             )}
 
