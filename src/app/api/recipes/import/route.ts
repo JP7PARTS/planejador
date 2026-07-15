@@ -34,6 +34,7 @@ interface SharedRecipe {
   yield_marmitas: number | null;
   prep_notes: string | null;
   ingredients: SharedIngredient[];
+  seasonings?: { name: string; quantity: number | null }[];
 }
 
 // Importa uma receita compartilhada para a conta do usuário: cria os alimentos
@@ -174,6 +175,22 @@ export async function POST(req: NextRequest) {
         { error: ingErr.message || "Erro ao salvar ingredientes" },
         { status: 400 }
       );
+    }
+
+    // Temperos & aromáticos (não bloqueiam a importação).
+    const seasonings = (shared.seasonings || [])
+      .filter((s) => s && typeof s.name === "string" && s.name.trim())
+      .map((s, idx) => ({
+        recipe_id: recipe.id,
+        name: s.name.trim(),
+        quantity:
+          s.quantity != null && Number.isFinite(Number(s.quantity)) && Number(s.quantity) > 0
+            ? Number(s.quantity)
+            : null,
+        order_index: idx,
+      }));
+    if (seasonings.length > 0) {
+      await supabase.from("recipe_seasonings").insert(seasonings);
     }
 
     return NextResponse.json({ id: recipe.id, title: titulo });

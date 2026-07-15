@@ -13,7 +13,7 @@ import {
   WeekSummary,
 } from "@/lib/calc";
 import { getWeek } from "@/lib/api/weeks";
-import { listRecipes, agruparIngredientes } from "@/lib/api/recipes";
+import { listRecipes, agruparIngredientes, agruparTemperos } from "@/lib/api/recipes";
 import { getHouseholdSummary } from "@/lib/api/household";
 import SemanaSalvaModal from "./semana-salva";
 import ResumoPessoa from "./resumo-pessoa";
@@ -1033,6 +1033,7 @@ export default function SemanaContent() {
               }
               itens={resumo ? buildShoppingList(resumo) : []}
               complementos={complementos}
+              temperos={agruparTemperos(receitasDaSemana)}
               storageKey={semanaId ?? undefined}
             />
 

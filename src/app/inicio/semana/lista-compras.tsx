@@ -23,6 +23,8 @@ interface Props {
   storageKey?: string;
   // Temperos/básicos que não entram no cálculo (base pessoal + extras da semana).
   complementos?: string[];
+  // Temperos & aromáticos das receitas (referência aproximada, ex.: "2× cebola").
+  temperos?: { label: string }[];
 }
 
 // Normaliza para dedupe e comparação (sem acento, minúsculo, sem espaços nas pontas).
@@ -39,6 +41,7 @@ export default function ListaCompras({
   itens,
   storageKey,
   complementos,
+  temperos,
 }: Props) {
   // Só persiste quando há uma semana salva (storageKey real). Semana nova não
   // grava nem lê nada — os checkboxes começam sempre limpos.
@@ -105,14 +108,25 @@ export default function ListaCompras({
     compl.push(c.trim());
   });
 
-  // Chave de marcação dos complementos com prefixo, para não colidir com
-  // nomes de alimentos.
-  const chaveCompl = (c: string) => "+" + c;
+  // Temperos das receitas: dedupe pelo rótulo já formatado ("2× cebola").
+  const temps: string[] = [];
+  const vistosTemp = new Set<string>();
+  (temperos ?? []).forEach((t) => {
+    const n = normalizar(t.label);
+    if (!n || vistosTemp.has(n)) return;
+    vistosTemp.add(n);
+    temps.push(t.label);
+  });
 
-  const total = itens.length + compl.length;
+  // Chaves de marcação com prefixo, para não colidir entre si nem com alimentos.
+  const chaveCompl = (c: string) => "+" + c;
+  const chaveTemp = (t: string) => "~" + t;
+
+  const total = itens.length + compl.length + temps.length;
   const comprados =
     itens.filter((it) => marcados.has(it.name)).length +
-    compl.filter((c) => marcados.has(chaveCompl(c))).length;
+    compl.filter((c) => marcados.has(chaveCompl(c))).length +
+    temps.filter((t) => marcados.has(chaveTemp(t))).length;
 
   // Texto para compartilhar/copiar.
   function montarTexto(): string {
@@ -124,6 +138,11 @@ export default function ListaCompras({
       });
       linhas.push("");
     });
+    if (temps.length > 0) {
+      linhas.push("🧅 Temperos & aromáticos");
+      temps.forEach((t) => linhas.push(`- ${t}`));
+      linhas.push("");
+    }
     if (compl.length > 0) {
       linhas.push("🧂 Complementos (temperos & básicos)");
       compl.forEach((c) => linhas.push(`- ${c}`));
@@ -230,6 +249,40 @@ export default function ListaCompras({
               </div>
             </div>
           ))}
+
+          {temps.length > 0 && (
+            <div>
+              <p className="mb-1.5 text-[11.5px] font-bold uppercase tracking-[0.05em] text-[#BFD8C4]">
+                🧅 Temperos & aromáticos
+              </p>
+              <div>
+                {temps.map((t) => {
+                  const feito = marcados.has(chaveTemp(t));
+                  return (
+                    <label
+                      key={t}
+                      className="flex cursor-pointer items-center gap-2.5 border-b border-white/10 py-1"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={feito}
+                        onChange={() => toggle(chaveTemp(t))}
+                        className="size-4 shrink-0 accent-emerald-400"
+                      />
+                      <span
+                        className={
+                          "flex-1 text-[14.5px] " +
+                          (feito ? "text-emerald-200/60 line-through" : "")
+                        }
+                      >
+                        {t}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {compl.length > 0 && (
             <div>

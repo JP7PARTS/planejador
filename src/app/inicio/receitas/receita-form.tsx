@@ -22,6 +22,11 @@ interface EscolhaForm {
   foodIds: string[];
 }
 
+interface TemperoForm {
+  name: string;
+  qtyStr: string; // vazio = "a gosto"
+}
+
 interface Props {
   recipe?: RecipeWithIngredients;
   alimentos: Food[];
@@ -82,6 +87,12 @@ export default function ReceitaForm({
     setPrincipal((p) =>
       p && p.tipo === tipo && p.idx === idx ? null : { tipo, idx }
     );
+  const [temperos, setTemperos] = useState<TemperoForm[]>(
+    (recipe?.seasonings ?? []).map((s) => ({
+      name: s.name,
+      qtyStr: s.quantity != null ? String(s.quantity) : "",
+    }))
+  );
   const [stepsText, setStepsText] = useState((recipe?.steps ?? []).join("\n"));
   const [totalTime, setTotalTime] = useState(
     recipe?.total_time_min != null ? String(recipe.total_time_min) : ""
@@ -154,6 +165,17 @@ export default function ReceitaForm({
       return p.idx > idx ? { ...p, idx: p.idx - 1 } : p;
     });
   }
+
+  // ---- Temperos & aromáticos ----
+  function atualizarTempero(idx: number, patch: Partial<TemperoForm>) {
+    setTemperos((prev) => prev.map((t, i) => (i === idx ? { ...t, ...patch } : t)));
+  }
+  function adicionarTempero() {
+    setTemperos((prev) => [...prev, { name: "", qtyStr: "" }]);
+  }
+  function removerTempero(idx: number) {
+    setTemperos((prev) => prev.filter((_, i) => i !== idx));
+  }
   function adicionarOpcao(idx: number, foodId: string) {
     if (!foodId) return;
     setEscolhas((prev) =>
@@ -218,6 +240,16 @@ export default function ReceitaForm({
       prep_notes: prepNotes.trim() || null,
       ingredients,
       choices,
+      seasonings: temperos
+        .filter((t) => t.name.trim())
+        .map((t) => {
+          const q = Number(t.qtyStr);
+          return {
+            name: t.name.trim(),
+            quantity:
+              t.qtyStr.trim() === "" || !Number.isFinite(q) || q <= 0 ? null : q,
+          };
+        }),
     };
 
     setCarregando(true);
@@ -449,6 +481,58 @@ export default function ReceitaForm({
               </div>
             ))}
           </div>
+
+          {/* Temperos & aromáticos */}
+          <div className="mb-1.5 flex items-center justify-between">
+            <label className="text-[13px] font-semibold">
+              Temperos & aromáticos{" "}
+              <span className="font-normal text-slate-400">
+                (cebola, alho, sal…)
+              </span>
+            </label>
+            <button
+              type="button"
+              onClick={adicionarTempero}
+              className="rounded-[9px] bg-[#E9F0E7] px-3 py-1.5 text-[13px] font-semibold text-emerald-700 transition hover:brightness-95 dark:bg-emerald-950/40 dark:text-emerald-300"
+            >
+              + Tempero
+            </button>
+          </div>
+          <div className="mb-1.5 flex flex-col gap-2">
+            {temperos.map((t, idx) => (
+              <div key={idx} className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={t.name}
+                  onChange={(e) => atualizarTempero(idx, { name: e.target.value })}
+                  placeholder="Ex.: cebola, dente de alho, sal"
+                  className="min-w-0 flex-1 rounded-[10px] border border-[#E2D7C4] bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                />
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={t.qtyStr}
+                  onChange={(e) => atualizarTempero(idx, { qtyStr: e.target.value })}
+                  placeholder="qtd"
+                  title="Quantidade (vazio = a gosto)"
+                  className={`${gramsInput} w-[70px]`}
+                />
+                <button
+                  type="button"
+                  onClick={() => removerTempero(idx)}
+                  className={removerBtn}
+                  aria-label="Remover tempero"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+          <p className="mb-4 text-[11.5px] text-slate-400">
+            Quantidade aproximada (vazio = a gosto). Não entram na nutrição — são
+            só referência na lista de compras.
+          </p>
 
           {/* Prévia de nutrição por marmita */}
           <div className="mb-4 rounded-[12px] bg-[#F7F2E9] px-3.5 py-2.5 text-[13px] dark:bg-slate-800">

@@ -12,6 +12,7 @@ import {
   tempoMaximo,
   porcoesEfetivas,
 } from "@/lib/api/events";
+import { agruparTemperos } from "@/lib/api/recipes";
 import { ShoppingListItem } from "@/lib/calc";
 import ListaCompras from "../../../semana/lista-compras";
 import GuiaPreparo from "../../../semana/guia-preparo";
@@ -175,6 +176,7 @@ export default function VerRefeicaoPage() {
           <ListaCompras
             titulo={evento.title}
             itens={itensCompra}
+            temperos={agruparTemperos(receitasPreparo)}
             storageKey={"refeicao-" + id}
           />
 

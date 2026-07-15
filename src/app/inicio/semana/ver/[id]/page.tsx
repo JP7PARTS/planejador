@@ -6,6 +6,7 @@ import { Food } from "@/lib/types";
 import { createClient } from "@/lib/supabase/client";
 import { getWeekFull, WeekFull } from "@/lib/api/weeks";
 import { createFood } from "@/lib/api/foods";
+import { agruparTemperos } from "@/lib/api/recipes";
 import {
   calculateWeekSummary,
   buildShoppingList,
@@ -265,6 +266,7 @@ export default function VerSemanaPage() {
                 }
                 itens={buildShoppingList(resumo)}
                 complementos={[...basicos, ...(dados.week.extras || [])]}
+                temperos={agruparTemperos(dados.recipes || [])}
                 storageKey={"ver-" + id}
               />
 

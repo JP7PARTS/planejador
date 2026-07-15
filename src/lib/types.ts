@@ -70,8 +70,18 @@ export interface RecipeIngredient {
   created_at: string;
 }
 
+export interface RecipeSeasoning {
+  id: string;
+  recipe_id: string;
+  name: string;
+  quantity: number | null; // null = "a gosto"
+  order_index: number | null;
+  created_at: string;
+}
+
 export interface RecipeWithIngredients extends Recipe {
   ingredients: RecipeIngredient[];
+  seasonings?: RecipeSeasoning[];
 }
 
 // Tipos para importação em massa de alimentos

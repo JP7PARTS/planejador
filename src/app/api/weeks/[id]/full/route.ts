@@ -40,7 +40,7 @@ export async function GET(
     // na visão do parceiro vem vazio — compartilhar receitas é escopo futuro).
     const { data: wr } = await supabase
       .from("week_recipes")
-      .select("recipe:recipes(*, ingredients:recipe_ingredients(*))")
+      .select("recipe:recipes(*, ingredients:recipe_ingredients(*), seasonings:recipe_seasonings(*))")
       .eq("week_id", id);
     const recipes = (wr || [])
       .map((r) => (r as { recipe: unknown }).recipe)
