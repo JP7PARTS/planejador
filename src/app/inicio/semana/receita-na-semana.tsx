@@ -29,7 +29,11 @@ interface Props {
   inp: string;
   onAtualizarLinha: (idx: number, updates: Partial<Omit<ItemGrupo, "idx">>) => void;
   onAtualizarGrupo: (updates: Partial<Omit<ItemGrupo, "idx">>) => void;
-  onEscalarPrincipal: (principalFoodId: string, novoGramas: number) => void;
+  onEscalarPrincipal: (
+    principalFoodId: string,
+    novoGramas: number,
+    pessoa: 1 | 2
+  ) => void;
   onRemoverLinha: (idx: number) => void;
   onRemover: () => void;
 }
@@ -113,6 +117,33 @@ export default function ReceitaNaSemana({
 
   const titulo = receita?.title || "Receita";
 
+  // Editor do g/marmita do principal (de uma pessoa). `label` null = sem rótulo.
+  const editorPrincipal = (
+    label: string | null,
+    grams: number,
+    pessoa: 1 | 2
+  ) => (
+    <div className="flex items-center gap-1.5">
+      {label && (
+        <span className="text-[12px] font-medium text-slate-500 dark:text-slate-400">
+          {label}
+        </span>
+      )}
+      <input
+        type="number"
+        min="0"
+        step="1"
+        defaultValue={fmtG(grams)}
+        key={pessoa + "-" + fmtG(grams) + "-" + (principal?.foodId ?? "")}
+        onBlur={(e) =>
+          principal &&
+          onEscalarPrincipal(principal.foodId, Number(e.target.value), pessoa)
+        }
+        className={`${inp} w-[72px] text-center`}
+      />
+    </div>
+  );
+
   // Seletor de marmitas [− n +].
   const marmitasCtrl = (label: string, valor: number, pessoa: 1 | 2) => (
     <div className="flex items-center gap-2">
@@ -184,26 +215,21 @@ export default function ReceitaNaSemana({
         )}
       </div>
 
-      {/* Editar o principal por g/marmita → os secundários escalam junto */}
+      {/* Editar o principal por g/marmita → os secundários escalam junto.
+          Em conjunta, um editor por pessoa (cada um come sua quantidade). */}
       {principal && foodOf(principal.foodId) && (
-        <div className="mb-2.5 flex flex-wrap items-center gap-2 rounded-[10px] bg-[#EEF4EC] px-3 py-2 dark:bg-emerald-950/30">
-          <span className="text-[12px] font-semibold text-emerald-800 dark:text-emerald-300">
-            {foodOf(principal.foodId)?.name} (principal):
-          </span>
-          <input
-            type="number"
-            min="0"
-            step="1"
-            defaultValue={fmtG(principal.p1Grams)}
-            key={principal.p1Grams + "-" + principal.foodId}
-            onBlur={(e) =>
-              onEscalarPrincipal(principal.foodId, Number(e.target.value))
-            }
-            className={`${inp} w-[80px] text-center`}
-          />
-          <span className="text-[12px] text-slate-500 dark:text-slate-400">
-            g/marmita → escala o prato
-          </span>
+        <div className="mb-2.5 rounded-[10px] bg-[#EEF4EC] px-3 py-2 dark:bg-emerald-950/30">
+          <p className="mb-1.5 text-[12px] font-semibold text-emerald-800 dark:text-emerald-300">
+            {foodOf(principal.foodId)?.name} (principal) — g/marmita:
+          </p>
+          {isShared ? (
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+              {editorPrincipal(meuNome, principal.p1Grams, 1)}
+              {editorPrincipal(person2Name || "Outra pessoa", principal.p2Grams, 2)}
+            </div>
+          ) : (
+            editorPrincipal(null, principal.p1Grams, 1)
+          )}
         </div>
       )}
 

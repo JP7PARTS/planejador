@@ -311,7 +311,8 @@ export default function SemanaContent() {
       p1On: true,
       p1Grams: it.grams,
       p1Marmitas: numMarmitas,
-      p2On: isShared,
+      // Prato é comido pelas duas pessoas (p2On só conta quando conjunta).
+      p2On: true,
       p2Grams: it.grams,
       p2Marmitas: numMarmitasP2,
       recipeId: receita.id,
@@ -340,12 +341,14 @@ export default function SemanaContent() {
     setReceitaIdsNaSemana((prev) => prev.filter((r) => r !== recipeId));
   }
 
-  // Escala o prato pelo ingrediente principal: define o novo g/marmita do
-  // principal e ajusta os secundários pelo mesmo fator (mantém a proporção).
+  // Escala o prato pelo ingrediente principal, no lado de uma pessoa: define o
+  // novo g/marmita do principal e ajusta os secundários daquele lado pelo mesmo
+  // fator (mantém a proporção). Em semana conjunta cada pessoa tem seu valor.
   function escalarPrincipal(
     recipeId: string,
     principalFoodId: string,
-    novoGramas: number
+    novoGramas: number,
+    pessoa: 1 | 2
   ) {
     const g = novoGramas || 0;
     if (g <= 0) return; // ignora valor vazio/zero (não zera o prato)
@@ -353,15 +356,17 @@ export default function SemanaContent() {
       const principalAtual = prev.find(
         (r) => r.recipeId === recipeId && r.foodId === principalFoodId
       );
-      const base = principalAtual?.p1Grams ?? 0;
+      const base =
+        pessoa === 1 ? principalAtual?.p1Grams ?? 0 : principalAtual?.p2Grams ?? 0;
       if (base <= 0) return prev;
       const fator = g / base;
       return prev.map((r) => {
         if (r.recipeId !== recipeId) return r;
-        if (r.foodId === principalFoodId) {
-          return { ...r, p1Grams: g, p2Grams: g };
+        const ehPrincipal = r.foodId === principalFoodId;
+        if (pessoa === 1) {
+          return { ...r, p1Grams: ehPrincipal ? g : r.p1Grams * fator };
         }
-        return { ...r, p1Grams: r.p1Grams * fator, p2Grams: r.p2Grams * fator };
+        return { ...r, p2Grams: ehPrincipal ? g : r.p2Grams * fator };
       });
     });
   }
@@ -536,7 +541,18 @@ export default function SemanaContent() {
                 <input
                   type="checkbox"
                   checked={isShared}
-                  onChange={(e) => setIsShared(e.target.checked)}
+                  onChange={(e) => {
+                    const ligado = e.target.checked;
+                    setIsShared(ligado);
+                    // Ao ligar, os pratos passam a valer para as duas pessoas.
+                    if (ligado) {
+                      setRows((prev) =>
+                        prev.map((r) =>
+                          r.recipeId ? { ...r, p2On: true } : r
+                        )
+                      );
+                    }
+                  }}
                   className="size-[17px] accent-emerald-600"
                 />
                 <span className="text-sm font-semibold">👥 Semana conjunta</span>
@@ -712,11 +728,12 @@ export default function SemanaContent() {
                           onAtualizarGrupo={(updates) =>
                             atualizarGrupoReceita(bloco.recipeId, updates)
                           }
-                          onEscalarPrincipal={(principalFoodId, novoGramas) =>
+                          onEscalarPrincipal={(principalFoodId, novoGramas, pessoa) =>
                             escalarPrincipal(
                               bloco.recipeId,
                               principalFoodId,
-                              novoGramas
+                              novoGramas,
+                              pessoa
                             )
                           }
                           onRemoverLinha={(i) => removerLinha(i)}
