@@ -2,6 +2,7 @@
 
 import { Food, RecipeWithIngredients } from "@/lib/types";
 import { calculateWeekItem } from "@/lib/calc";
+import { agruparIngredientes } from "@/lib/api/recipes";
 import AlimentoSelect from "./alimento-select";
 import { useState } from "react";
 
@@ -28,6 +29,7 @@ interface Props {
   inp: string;
   onAtualizarLinha: (idx: number, updates: Partial<Omit<ItemGrupo, "idx">>) => void;
   onAtualizarGrupo: (updates: Partial<Omit<ItemGrupo, "idx">>) => void;
+  onEscalarPrincipal: (principalFoodId: string, novoGramas: number) => void;
   onRemoverLinha: (idx: number) => void;
   onRemover: () => void;
 }
@@ -50,11 +52,11 @@ export default function ReceitaNaSemana({
   inp,
   onAtualizarLinha,
   onAtualizarGrupo,
+  onEscalarPrincipal,
   onRemoverLinha,
   onRemover,
 }: Props) {
   const [ajustando, setAjustando] = useState(false);
-  const [principalId, setPrincipalId] = useState<string | null>(null);
 
   const foodOf = (id: string) => alimentos.find((f) => f.id === id);
 
@@ -62,29 +64,32 @@ export default function ReceitaNaSemana({
   const marm1 = itens[0]?.p1Marmitas ?? 1;
   const marm2 = itens[0]?.p2Marmitas ?? 1;
 
-  // Ingrediente principal: o de maior g/marmita, salvo escolha manual.
-  const principal =
-    (principalId ? itens.find((it) => it.foodId === principalId) : undefined) ??
-    itens.reduce<ItemGrupo | null>(
+  // Ingrediente principal: definido na receita (is_principal). A escolha
+  // principal casa pela opção que está no prato. Fallback (receita sem
+  // principal / receita antiga): o de maior g/marmita.
+  const principal: ItemGrupo | null = (() => {
+    if (receita) {
+      const { fixos, escolhas } = agruparIngredientes(receita.ingredients);
+      const fixoP = fixos.find((f) => f.is_principal);
+      if (fixoP) {
+        const m = itens.find((it) => it.foodId === fixoP.food_id);
+        if (m) return m;
+      }
+      const escP = escolhas.find((e) => e.is_principal);
+      if (escP) {
+        const m = itens.find((it) => escP.food_ids.includes(it.foodId));
+        if (m) return m;
+      }
+    }
+    return itens.reduce<ItemGrupo | null>(
       (maior, it) => (!maior || it.p1Grams > maior.p1Grams ? it : maior),
       null
     );
+  })();
 
   function setMarmitasGrupo(pessoa: 1 | 2, valor: number) {
     const v = Math.max(1, Math.floor(valor) || 1);
     onAtualizarGrupo(pessoa === 1 ? { p1Marmitas: v } : { p2Marmitas: v });
-  }
-
-  // Dirige pelo ingrediente principal: digita o total cru desejado → calcula
-  // quantas marmitas dão essa quantia e aplica ao prato inteiro.
-  function dirigirPeloPrincipal(totalCru: number) {
-    if (!principal) return;
-    const food = foodOf(principal.foodId);
-    if (!food || principal.p1Grams <= 0) return;
-    const cruPorMarmita = calculateWeekItem(food, principal.p1Grams, 1).rawTotal;
-    if (cruPorMarmita <= 0) return;
-    const n = Math.max(1, Math.round(totalCru / cruPorMarmita));
-    onAtualizarGrupo({ p1Marmitas: n });
   }
 
   // Totais do prato (cru/kcal/prot) por pessoa.
@@ -179,8 +184,8 @@ export default function ReceitaNaSemana({
         )}
       </div>
 
-      {/* Dirigir pelo ingrediente principal (só modo normal) */}
-      {!isShared && principal && foodOf(principal.foodId) && (
+      {/* Editar o principal por g/marmita → os secundários escalam junto */}
+      {principal && foodOf(principal.foodId) && (
         <div className="mb-2.5 flex flex-wrap items-center gap-2 rounded-[10px] bg-[#EEF4EC] px-3 py-2 dark:bg-emerald-950/30">
           <span className="text-[12px] font-semibold text-emerald-800 dark:text-emerald-300">
             {foodOf(principal.foodId)?.name} (principal):
@@ -188,19 +193,16 @@ export default function ReceitaNaSemana({
           <input
             type="number"
             min="0"
-            defaultValue={Math.round(
-              calculateWeekItem(
-                foodOf(principal.foodId)!,
-                principal.p1Grams,
-                principal.p1Marmitas
-              ).rawTotal
-            )}
-            key={principal.p1Marmitas + "-" + principal.foodId}
-            onBlur={(e) => dirigirPeloPrincipal(Number(e.target.value))}
-            className={`${inp} w-[90px] text-center`}
+            step="1"
+            defaultValue={fmtG(principal.p1Grams)}
+            key={principal.p1Grams + "-" + principal.foodId}
+            onBlur={(e) =>
+              onEscalarPrincipal(principal.foodId, Number(e.target.value))
+            }
+            className={`${inp} w-[80px] text-center`}
           />
           <span className="text-[12px] text-slate-500 dark:text-slate-400">
-            g crus → ajusta o prato
+            g/marmita → escala o prato
           </span>
         </div>
       )}
@@ -244,20 +246,13 @@ export default function ReceitaNaSemana({
                     className={`${inp} w-[64px] text-center`}
                   />
                 </div>
-                {!isShared && (
-                  <button
-                    type="button"
-                    onClick={() => setPrincipalId(it.foodId)}
-                    title="Marcar como principal"
-                    className={
-                      "rounded-[8px] border px-2 py-1 text-[11px] font-semibold transition " +
-                      (ehPrincipal
-                        ? "border-emerald-600 bg-emerald-600 text-white"
-                        : "border-[#E2D7C4] bg-white text-slate-500 hover:brightness-95 dark:border-slate-700 dark:bg-slate-900")
-                    }
+                {ehPrincipal && (
+                  <span
+                    title="Principal (definido na receita)"
+                    className="text-[13px] text-amber-500"
                   >
-                    principal
-                  </button>
+                    ⭐
+                  </span>
                 )}
                 <button
                   onClick={() => onRemoverLinha(it.idx)}
@@ -276,9 +271,9 @@ export default function ReceitaNaSemana({
               className="flex items-center justify-between gap-2 py-1.5"
             >
               <span className="min-w-0 flex-1 truncate text-[14px] font-medium">
-                {ehPrincipal && !isShared && (
-                  <span className="mr-1 text-[10px] text-emerald-700 dark:text-emerald-400">
-                    ●
+                {ehPrincipal && (
+                  <span className="mr-1 text-[10px] text-amber-500" title="Principal">
+                    ⭐
                   </span>
                 )}
                 {food?.name ?? "—"}

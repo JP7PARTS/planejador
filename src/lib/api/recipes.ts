@@ -6,6 +6,7 @@ export interface RecipeChoice {
   label: string;
   cooked_grams_per_marmita: number;
   food_ids: string[];
+  is_principal: boolean;
 }
 
 // Separa os ingredientes de uma receita em fixos (choice_group null) e escolhas
@@ -21,12 +22,14 @@ export function agruparIngredientes(ings: RecipeIngredient[]): {
     const existente = map.get(i.choice_group);
     if (existente) {
       existente.food_ids.push(i.food_id);
+      if (i.is_principal) existente.is_principal = true;
     } else {
       map.set(i.choice_group, {
         group: i.choice_group,
         label: i.choice_label ?? "Escolha",
         cooked_grams_per_marmita: i.cooked_grams_per_marmita,
         food_ids: [i.food_id],
+        is_principal: !!i.is_principal,
       });
     }
   });
@@ -39,6 +42,7 @@ export function agruparIngredientes(ings: RecipeIngredient[]): {
 export interface RecipeIngredientInput {
   food_id: string;
   cooked_grams_per_marmita: number;
+  is_principal?: boolean;
 }
 
 // Um ingrediente "à escolha": um rótulo (ex.: "Carne"), as gramas e a lista de
@@ -47,6 +51,7 @@ export interface RecipeChoiceInput {
   label: string;
   cooked_grams_per_marmita: number;
   food_ids: string[];
+  is_principal?: boolean;
 }
 
 // Dados enviados para criar/editar uma receita.
