@@ -6,7 +6,7 @@ import {
   RecipeWithIngredients,
   Food,
 } from "@/lib/types";
-import { calculateWeekItem } from "@/lib/calc";
+import { calculateWeekItem, nomeCompra } from "@/lib/calc";
 import { agruparIngredientes } from "@/lib/api/recipes";
 
 // Fatores de porção por faixa etária (pesquisados pelo usuário).
@@ -109,10 +109,26 @@ export function calcularListaCompras(
   const alimentosMap: Record<string, Food> = {};
   alimentos.forEach((f) => (alimentosMap[f.id] = f));
 
-  const porAlimento: Record<
+  // Agrega por nome de compra: alimentos diferentes (ex.: "Acém cozido" e
+  // "Acém grelhado") com o mesmo nome de compra juntam numa linha só.
+  const porCompra: Record<
     string,
-    { name: string; category: string; grams: number }
+    { food_id: string; name: string; category: string; grams: number }
   > = {};
+
+  function acumular(food: Food, cookedGrams: number) {
+    const rawGrams = cookedGrams / food.fc;
+    const nome = nomeCompra(food);
+    if (!porCompra[nome]) {
+      porCompra[nome] = {
+        food_id: food.id,
+        name: nome,
+        category: food.category,
+        grams: 0,
+      };
+    }
+    porCompra[nome].grams += rawGrams;
+  }
 
   eventRecipes.forEach((er) => {
     if (!er.recipe || !er.recipe.ingredients) return;
@@ -123,18 +139,7 @@ export function calcularListaCompras(
     fixos.forEach((ing) => {
       const food = alimentosMap[ing.food_id];
       if (!food) return;
-
-      const cookedGrams = ing.cooked_grams_per_marmita * porcoes;
-      const rawGrams = cookedGrams / food.fc;
-
-      if (!porAlimento[ing.food_id]) {
-        porAlimento[ing.food_id] = {
-          name: food.name,
-          category: food.category,
-          grams: 0,
-        };
-      }
-      porAlimento[ing.food_id].grams += rawGrams;
+      acumular(food, ing.cooked_grams_per_marmita * porcoes);
     });
 
     // Adiciona a opção escolhida de cada escolha (fallback: 1ª opção)
@@ -142,23 +147,12 @@ export function calcularListaCompras(
       const foodId = er.choices?.[escolha.group] || escolha.food_ids[0];
       const food = alimentosMap[foodId];
       if (!food) return;
-
-      const cookedGrams = escolha.cooked_grams_per_marmita * porcoes;
-      const rawGrams = cookedGrams / food.fc;
-
-      if (!porAlimento[foodId]) {
-        porAlimento[foodId] = {
-          name: food.name,
-          category: food.category,
-          grams: 0,
-        };
-      }
-      porAlimento[foodId].grams += rawGrams;
+      acumular(food, escolha.cooked_grams_per_marmita * porcoes);
     });
   });
 
-  return Object.entries(porAlimento).map(([foodId, data]) => ({
-    food_id: foodId,
+  return Object.values(porCompra).map((data) => ({
+    food_id: data.food_id,
     food_name: data.name,
     category: data.category,
     quantity_grams: Math.round(data.grams),
