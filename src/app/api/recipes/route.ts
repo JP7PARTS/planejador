@@ -87,6 +87,37 @@ function sanitizeChoices(v: unknown): ChoiceInput[] {
     );
 }
 
+// Temperos válidos: precisam de nome. quantity nula = "a gosto".
+function sanitizeSeasonings(
+  v: unknown
+): { name: string; quantity: number | null }[] {
+  if (!Array.isArray(v)) return [];
+  return v
+    .map((s) => {
+      const item = s as { name?: unknown; quantity?: unknown };
+      const name = typeof item.name === "string" ? item.name.trim() : "";
+      const q = Number(item.quantity);
+      const quantity =
+        item.quantity === "" || item.quantity == null || !Number.isFinite(q) || q <= 0
+          ? null
+          : q;
+      return { name, quantity };
+    })
+    .filter((s) => s.name.length > 0);
+}
+
+function buildSeasoningRows(
+  recipeId: string,
+  seasonings: { name: string; quantity: number | null }[]
+) {
+  return seasonings.map((s, idx) => ({
+    recipe_id: recipeId,
+    name: s.name,
+    quantity: s.quantity,
+    order_index: idx,
+  }));
+}
+
 // Monta as linhas de recipe_ingredients: fixos (choice_group null) + as opções
 // de cada escolha (mesmo choice_group/rótulo/gramas por grupo). Garante no
 // máximo um slot principal (fixo tem precedência sobre escolha).
@@ -133,7 +164,7 @@ export async function GET() {
 
     const { data, error } = await supabase
       .from("recipes")
-      .select("*, ingredients:recipe_ingredients(*)")
+      .select("*, ingredients:recipe_ingredients(*), seasonings:recipe_seasonings(*)")
       .order("title");
 
     if (error) {
@@ -217,7 +248,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    return NextResponse.json({ ...recipe, ingredients: ings ?? [] }, { status: 201 });
+    // Temperos & aromáticos (opcionais; não bloqueiam a criação).
+    const seasonings = sanitizeSeasonings(body.seasonings);
+    let seas: unknown[] = [];
+    if (seasonings.length > 0) {
+      const { data: s } = await supabase
+        .from("recipe_seasonings")
+        .insert(buildSeasoningRows(recipe.id, seasonings))
+        .select();
+      seas = s ?? [];
+    }
+
+    return NextResponse.json(
+      { ...recipe, ingredients: ings ?? [], seasonings: seas },
+      { status: 201 }
+    );
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Erro interno";
     return NextResponse.json({ error: msg }, { status: 500 });

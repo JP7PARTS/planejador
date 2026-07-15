@@ -173,6 +173,19 @@ export default function ImportarReceitaPage() {
               ))}
             </ul>
 
+            {preview.seasonings && preview.seasonings.length > 0 && (
+              <p className="mt-3 text-[13px] text-slate-600 dark:text-slate-300">
+                🧅 Temperos:{" "}
+                {preview.seasonings
+                  .map((s) =>
+                    s.quantity != null && s.quantity > 0
+                      ? `${fmt(s.quantity)}× ${s.name}`
+                      : `${s.name} (a gosto)`
+                  )
+                  .join(" · ")}
+              </p>
+            )}
+
             {preview.steps.length > 0 && (
               <>
                 <h2 className="mb-2 mt-4 text-[15px] font-bold">Modo de preparo</h2>

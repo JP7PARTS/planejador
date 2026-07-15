@@ -1,5 +1,59 @@
 import { RecipeWithIngredients, RecipeIngredient } from "@/lib/types";
 
+// Um tempero/aromático ao criar/editar uma receita (nome + quantidade opcional).
+export interface RecipeSeasoningInput {
+  name: string;
+  quantity: number | null;
+}
+
+// Normaliza nome para agrupar (minúsculo, sem acento, sem espaços nas pontas).
+function normalizarNome(s: string): string {
+  return s
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "");
+}
+
+// Junta os temperos das receitas (fixos por receita: cada receita contribui uma
+// vez) por nome, somando quantidades. Sem quantidade = "a gosto".
+// Devolve rótulos prontos: "2× cebola", "sal (a gosto)".
+export function agruparTemperos(
+  receitas: RecipeWithIngredients[]
+): { label: string }[] {
+  const mapa = new Map<
+    string,
+    { nome: string; total: number; temNumero: boolean; aGosto: boolean }
+  >();
+  receitas.forEach((r) => {
+    (r.seasonings ?? []).forEach((s) => {
+      const nome = s.name.trim();
+      if (!nome) return;
+      const chave = normalizarNome(nome);
+      const atual =
+        mapa.get(chave) ??
+        { nome, total: 0, temNumero: false, aGosto: false };
+      if (s.quantity != null && s.quantity > 0) {
+        atual.total += s.quantity;
+        atual.temNumero = true;
+      } else {
+        atual.aGosto = true;
+      }
+      mapa.set(chave, atual);
+    });
+  });
+
+  return Array.from(mapa.values()).map((t) => {
+    if (t.temNumero) {
+      const qtd = Number.isInteger(t.total)
+        ? String(t.total)
+        : t.total.toFixed(1).replace(".", ",");
+      return { label: `${qtd}× ${t.nome}` };
+    }
+    return { label: `${t.nome} (a gosto)` };
+  });
+}
+
 // Uma "escolha" já agrupada (as linhas do mesmo choice_group viram um slot).
 export interface RecipeChoice {
   group: number;
@@ -64,6 +118,7 @@ export interface RecipeInput {
   prep_notes: string | null;
   ingredients: RecipeIngredientInput[];
   choices: RecipeChoiceInput[];
+  seasonings: RecipeSeasoningInput[];
 }
 
 export async function listRecipes() {
@@ -144,6 +199,7 @@ export interface SharedRecipePreview {
       fat_g_per_100g: number;
     };
   }>;
+  seasonings?: { name: string; quantity: number | null }[];
 }
 
 export async function getSharedRecipe(code: string): Promise<SharedRecipePreview> {
