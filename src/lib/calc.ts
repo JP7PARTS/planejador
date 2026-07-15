@@ -5,6 +5,7 @@ export interface WeekItem {
   cookedGramsPerMarmita: number;
   numMarmitas: number;
   person?: 1 | 2; // opcional; usado só para dividir semana conjunta (calc ignora)
+  recipe_id?: string | null; // de qual receita veio (agrupamento); null = avulso
 }
 
 export interface WeekItemResult extends WeekItem {

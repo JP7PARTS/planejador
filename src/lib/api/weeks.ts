@@ -15,6 +15,7 @@ export interface WeekItemData {
   cooked_grams_per_marmita: number;
   num_marmitas: number;
   person?: number;
+  recipe_id?: string | null;
 }
 
 export async function listWeeks(): Promise<Week[]> {

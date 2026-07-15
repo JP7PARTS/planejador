@@ -36,6 +36,7 @@ export interface WeekItemDB {
   cooked_grams_per_marmita: number;
   num_marmitas: number;
   person: number; // 1 = você, 2 = a 2ª pessoa
+  recipe_id: string | null; // de qual receita o item veio (agrupamento)
   created_at: string;
 }
 

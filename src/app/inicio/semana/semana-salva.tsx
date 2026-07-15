@@ -57,6 +57,7 @@ export default function SemanaSalvaModal({
         cooked_grams_per_marmita: l.cookedGramsPerMarmita,
         num_marmitas: l.numMarmitas,
         person: isShared ? l.person ?? 1 : 1,
+        recipe_id: l.recipe_id ?? null,
       }));
   }
 
