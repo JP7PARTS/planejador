@@ -59,6 +59,13 @@ export default function RootLayout({
             __html: `(function(){try{var t=localStorage.getItem("theme")||(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");document.documentElement.dataset.theme=t;}catch(e){document.documentElement.dataset.theme="light";}})();`,
           }}
         />
+        {/* Captura o evento de "instalar app" cedo (o Chrome o dispara antes do
+            React montar) para o botão de instalação poder usá-lo depois. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();window.__deferredPrompt=e;window.dispatchEvent(new Event("pwa-installable"));});window.addEventListener("appinstalled",function(){window.__deferredPrompt=null;window.dispatchEvent(new Event("pwa-installed"));});})();`,
+          }}
+        />
         <ServiceWorkerRegister />
         {children}
       </body>

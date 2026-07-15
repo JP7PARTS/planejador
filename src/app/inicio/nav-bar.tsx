@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import SignOutButton from "./sign-out-button";
 import ThemeToggle from "../theme-toggle";
+import InstallButton from "../install-button";
 
 const links = [
   { href: "/inicio", label: "Início" },
@@ -66,6 +67,7 @@ export default function NavBar() {
           >
             + Nova semana
           </Link>
+          <InstallButton />
           <ThemeToggle />
           <SignOutButton />
         </div>
