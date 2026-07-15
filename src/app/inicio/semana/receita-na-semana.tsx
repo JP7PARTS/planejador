@@ -1,0 +1,342 @@
+"use client";
+
+import { Food, RecipeWithIngredients } from "@/lib/types";
+import { calculateWeekItem } from "@/lib/calc";
+import AlimentoSelect from "./alimento-select";
+import { useState } from "react";
+
+// Uma linha do prato (índice dentro do array `rows` do pai + os dados dela).
+export interface ItemGrupo {
+  idx: number;
+  foodId: string;
+  p1On: boolean;
+  p1Grams: number;
+  p1Marmitas: number;
+  p2On: boolean;
+  p2Grams: number;
+  p2Marmitas: number;
+}
+
+interface Props {
+  recipeId: string;
+  receita?: RecipeWithIngredients;
+  alimentos: Food[];
+  itens: ItemGrupo[];
+  isShared: boolean;
+  meuNome: string;
+  person2Name: string;
+  inp: string;
+  onAtualizarLinha: (idx: number, updates: Partial<Omit<ItemGrupo, "idx">>) => void;
+  onAtualizarGrupo: (updates: Partial<Omit<ItemGrupo, "idx">>) => void;
+  onRemoverLinha: (idx: number) => void;
+  onRemover: () => void;
+}
+
+function fmtG(n: number): string {
+  return Number.isInteger(n) ? String(n) : n.toFixed(0);
+}
+
+// Cartão de um prato (receita) na semana: agrupa os ingredientes, escala tudo
+// junto por marmitas (ou pela quantidade do ingrediente principal) e esconde os
+// ajustes finos atrás de "Ajustar ingredientes".
+export default function ReceitaNaSemana({
+  recipeId,
+  receita,
+  alimentos,
+  itens,
+  isShared,
+  meuNome,
+  person2Name,
+  inp,
+  onAtualizarLinha,
+  onAtualizarGrupo,
+  onRemoverLinha,
+  onRemover,
+}: Props) {
+  const [ajustando, setAjustando] = useState(false);
+  const [principalId, setPrincipalId] = useState<string | null>(null);
+
+  const foodOf = (id: string) => alimentos.find((f) => f.id === id);
+
+  // Marmitas do prato = as da 1ª linha (todas as linhas do grupo compartilham).
+  const marm1 = itens[0]?.p1Marmitas ?? 1;
+  const marm2 = itens[0]?.p2Marmitas ?? 1;
+
+  // Ingrediente principal: o de maior g/marmita, salvo escolha manual.
+  const principal =
+    (principalId ? itens.find((it) => it.foodId === principalId) : undefined) ??
+    itens.reduce<ItemGrupo | null>(
+      (maior, it) => (!maior || it.p1Grams > maior.p1Grams ? it : maior),
+      null
+    );
+
+  function setMarmitasGrupo(pessoa: 1 | 2, valor: number) {
+    const v = Math.max(1, Math.floor(valor) || 1);
+    onAtualizarGrupo(pessoa === 1 ? { p1Marmitas: v } : { p2Marmitas: v });
+  }
+
+  // Dirige pelo ingrediente principal: digita o total cru desejado → calcula
+  // quantas marmitas dão essa quantia e aplica ao prato inteiro.
+  function dirigirPeloPrincipal(totalCru: number) {
+    if (!principal) return;
+    const food = foodOf(principal.foodId);
+    if (!food || principal.p1Grams <= 0) return;
+    const cruPorMarmita = calculateWeekItem(food, principal.p1Grams, 1).rawTotal;
+    if (cruPorMarmita <= 0) return;
+    const n = Math.max(1, Math.round(totalCru / cruPorMarmita));
+    onAtualizarGrupo({ p1Marmitas: n });
+  }
+
+  // Totais do prato (cru/kcal/prot) por pessoa.
+  function totais(pessoa: 1 | 2) {
+    let cru = 0;
+    let kcal = 0;
+    let prot = 0;
+    itens.forEach((it) => {
+      const food = foodOf(it.foodId);
+      const on = pessoa === 1 ? it.p1On : it.p2On;
+      const grams = pessoa === 1 ? it.p1Grams : it.p2Grams;
+      const marm = pessoa === 1 ? it.p1Marmitas : it.p2Marmitas;
+      if (!food || !on || grams <= 0) return;
+      const r = calculateWeekItem(food, grams, marm);
+      cru += r.rawTotal;
+      kcal += r.kcalTotal;
+      prot += r.proteinTotal;
+    });
+    return { cru, kcal, prot };
+  }
+
+  const titulo = receita?.title || "Receita";
+
+  // Seletor de marmitas [− n +].
+  const marmitasCtrl = (label: string, valor: number, pessoa: 1 | 2) => (
+    <div className="flex items-center gap-2">
+      <span className="text-[12px] font-semibold text-slate-500 dark:text-slate-400">
+        {label}
+      </span>
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          onClick={() => setMarmitasGrupo(pessoa, valor - 1)}
+          className="grid size-7 place-items-center rounded-[8px] border border-[#E2D7C4] bg-white text-slate-600 transition hover:brightness-95 dark:border-slate-700 dark:bg-slate-900"
+          aria-label="Menos marmitas"
+        >
+          −
+        </button>
+        <input
+          type="number"
+          min="1"
+          value={valor}
+          onChange={(e) => setMarmitasGrupo(pessoa, Number(e.target.value))}
+          className={`${inp} w-[52px] text-center`}
+        />
+        <button
+          type="button"
+          onClick={() => setMarmitasGrupo(pessoa, valor + 1)}
+          className="grid size-7 place-items-center rounded-[8px] border border-[#E2D7C4] bg-white text-slate-600 transition hover:brightness-95 dark:border-slate-700 dark:bg-slate-900"
+          aria-label="Mais marmitas"
+        >
+          +
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div
+      className="rounded-[14px] border border-[#EADFCD] bg-[#FCFAF5] p-3.5 dark:border-slate-700 dark:bg-slate-800"
+      style={{ borderLeft: "4px solid #2E6B47" }}
+    >
+      {/* Cabeçalho */}
+      <div className="mb-2.5 flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-[15.5px] font-bold [font-family:var(--font-display)]">
+            🍲 {titulo}
+          </p>
+          <p className="text-[12px] text-slate-500 dark:text-slate-400">
+            {itens.length} ingrediente{itens.length === 1 ? "" : "s"} · escala junto
+          </p>
+        </div>
+        <button
+          onClick={onRemover}
+          title="Remover prato"
+          aria-label="Remover prato"
+          className="shrink-0 rounded-[8px] border border-[#F0DAD2] bg-[#FCF4F1] px-2 py-1 text-[13px] text-rose-600 transition hover:brightness-95 dark:border-rose-900 dark:bg-rose-950/20"
+        >
+          ✕
+        </button>
+      </div>
+
+      {/* Controle de marmitas */}
+      <div className="mb-2.5 flex flex-wrap items-center gap-x-4 gap-y-2">
+        {isShared ? (
+          <>
+            {marmitasCtrl(meuNome, marm1, 1)}
+            {marmitasCtrl(person2Name || "Outra pessoa", marm2, 2)}
+          </>
+        ) : (
+          marmitasCtrl("Marmitas", marm1, 1)
+        )}
+      </div>
+
+      {/* Dirigir pelo ingrediente principal (só modo normal) */}
+      {!isShared && principal && foodOf(principal.foodId) && (
+        <div className="mb-2.5 flex flex-wrap items-center gap-2 rounded-[10px] bg-[#EEF4EC] px-3 py-2 dark:bg-emerald-950/30">
+          <span className="text-[12px] font-semibold text-emerald-800 dark:text-emerald-300">
+            {foodOf(principal.foodId)?.name} (principal):
+          </span>
+          <input
+            type="number"
+            min="0"
+            defaultValue={Math.round(
+              calculateWeekItem(
+                foodOf(principal.foodId)!,
+                principal.p1Grams,
+                principal.p1Marmitas
+              ).rawTotal
+            )}
+            key={principal.p1Marmitas + "-" + principal.foodId}
+            onBlur={(e) => dirigirPeloPrincipal(Number(e.target.value))}
+            className={`${inp} w-[90px] text-center`}
+          />
+          <span className="text-[12px] text-slate-500 dark:text-slate-400">
+            g crus → ajusta o prato
+          </span>
+        </div>
+      )}
+
+      {/* Lista de ingredientes (leitura) */}
+      <div className="flex flex-col divide-y divide-dashed divide-[#E7DECD] dark:divide-slate-700">
+        {itens.map((it) => {
+          const food = foodOf(it.foodId);
+          const r1 =
+            food && it.p1On && it.p1Grams > 0
+              ? calculateWeekItem(food, it.p1Grams, it.p1Marmitas)
+              : null;
+          const r2 =
+            food && isShared && it.p2On && it.p2Grams > 0
+              ? calculateWeekItem(food, it.p2Grams, it.p2Marmitas)
+              : null;
+          const ehPrincipal = principal?.foodId === it.foodId;
+
+          if (ajustando) {
+            return (
+              <div key={it.idx} className="flex items-center gap-2 py-2">
+                <div className="min-w-0 flex-1">
+                  <AlimentoSelect
+                    alimentos={alimentos}
+                    value={it.foodId}
+                    onChange={(foodId) => onAtualizarLinha(it.idx, { foodId })}
+                  />
+                </div>
+                <div className="text-center">
+                  <label className="mb-0.5 block text-[10px] font-semibold text-slate-400">
+                    pronto/marmita
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={it.p1Grams}
+                    onChange={(e) => {
+                      const v = Number(e.target.value);
+                      onAtualizarLinha(it.idx, { p1Grams: v, p2Grams: v });
+                    }}
+                    className={`${inp} w-[64px] text-center`}
+                  />
+                </div>
+                {!isShared && (
+                  <button
+                    type="button"
+                    onClick={() => setPrincipalId(it.foodId)}
+                    title="Marcar como principal"
+                    className={
+                      "rounded-[8px] border px-2 py-1 text-[11px] font-semibold transition " +
+                      (ehPrincipal
+                        ? "border-emerald-600 bg-emerald-600 text-white"
+                        : "border-[#E2D7C4] bg-white text-slate-500 hover:brightness-95 dark:border-slate-700 dark:bg-slate-900")
+                    }
+                  >
+                    principal
+                  </button>
+                )}
+                <button
+                  onClick={() => onRemoverLinha(it.idx)}
+                  title="Remover ingrediente"
+                  className="p-1 text-[15px] text-rose-600 transition hover:opacity-70"
+                >
+                  ✕
+                </button>
+              </div>
+            );
+          }
+
+          return (
+            <div
+              key={it.idx}
+              className="flex items-center justify-between gap-2 py-1.5"
+            >
+              <span className="min-w-0 flex-1 truncate text-[14px] font-medium">
+                {ehPrincipal && !isShared && (
+                  <span className="mr-1 text-[10px] text-emerald-700 dark:text-emerald-400">
+                    ●
+                  </span>
+                )}
+                {food?.name ?? "—"}
+                <span className="ml-1.5 text-[12px] text-slate-400">
+                  {fmtG(it.p1Grams)} g/marmita
+                </span>
+              </span>
+              <span className="shrink-0 text-right text-[12.5px]">
+                {isShared ? (
+                  <span className="text-slate-600 dark:text-slate-400">
+                    {r1 ? `${fmtG(r1.rawTotal)} g` : "—"}
+                    {" · "}
+                    {r2 ? `${fmtG(r2.rawTotal)} g` : "—"}
+                  </span>
+                ) : (
+                  <span className="font-semibold text-emerald-700 dark:text-emerald-400">
+                    {r1 ? `${fmtG(r1.rawTotal)} g crus` : "—"}
+                  </span>
+                )}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Totais do prato + Ajustar */}
+      <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 border-t border-[#E7DECD] pt-2.5 dark:border-slate-700">
+        <div className="text-[12.5px] text-slate-600 dark:text-slate-400">
+          {isShared ? (
+            <>
+              <strong className="text-emerald-700 dark:text-emerald-400">
+                {meuNome}:
+              </strong>{" "}
+              {totais(1).kcal.toFixed(0)} kcal · {totais(1).prot.toFixed(0)} g prot
+              {"  ·  "}
+              <strong className="text-emerald-700 dark:text-emerald-400">
+                {person2Name || "P2"}:
+              </strong>{" "}
+              {totais(2).kcal.toFixed(0)} kcal · {totais(2).prot.toFixed(0)} g prot
+            </>
+          ) : (
+            <>
+              Prato:{" "}
+              <strong className="text-emerald-700 dark:text-emerald-400">
+                {totais(1).cru.toFixed(0)} g crus
+              </strong>{" "}
+              · {totais(1).kcal.toFixed(0)} kcal · {totais(1).prot.toFixed(0)} g prot
+            </>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={() => setAjustando((v) => !v)}
+          className="rounded-[8px] border border-[#E2D7C4] bg-white px-2.5 py-1 text-[12px] font-semibold text-slate-600 transition hover:brightness-95 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+        >
+          {ajustando ? "✓ Pronto" : "⚙️ Ajustar ingredientes"}
+        </button>
+      </div>
+    </div>
+  );
+}

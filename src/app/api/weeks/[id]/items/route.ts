@@ -32,7 +32,8 @@ export async function POST(
     }
 
     const body = await req.json();
-    const { food_id, cooked_grams_per_marmita, num_marmitas, person } = body;
+    const { food_id, cooked_grams_per_marmita, num_marmitas, person, recipe_id } =
+      body;
 
     if (!food_id || !cooked_grams_per_marmita || !num_marmitas) {
       return NextResponse.json(
@@ -49,6 +50,7 @@ export async function POST(
         cooked_grams_per_marmita,
         num_marmitas,
         person: person === 2 ? 2 : 1,
+        recipe_id: recipe_id ?? null,
       })
       .select()
       .single();
@@ -106,6 +108,7 @@ export async function PUT(
         cooked_grams_per_marmita: number;
         num_marmitas: number;
         person?: number;
+        recipe_id?: string | null;
       }>;
     };
 
@@ -138,6 +141,7 @@ export async function PUT(
         cooked_grams_per_marmita: it.cooked_grams_per_marmita,
         num_marmitas: it.num_marmitas,
         person: it.person === 2 ? 2 : 1,
+        recipe_id: it.recipe_id ?? null,
       }));
 
     if (linhas.length > 0) {

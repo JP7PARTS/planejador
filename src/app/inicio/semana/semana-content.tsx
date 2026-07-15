@@ -21,6 +21,7 @@ import ListaCompras from "./lista-compras";
 import AlimentoSelect from "./alimento-select";
 import MontagemMarmitas, { PessoaMontagem } from "./montagem";
 import ReceitaPicker, { EscolhaResolvida } from "./receita-picker";
+import ReceitaNaSemana, { ItemGrupo } from "./receita-na-semana";
 import GuiaPreparo from "./guia-preparo";
 import Link from "next/link";
 
@@ -35,6 +36,7 @@ interface FoodRow {
   p2On: boolean;
   p2Grams: number;
   p2Marmitas: number;
+  recipeId?: string | null; // de qual receita veio (agrupa no cartão de prato)
 }
 
 export default function SemanaContent() {
@@ -100,6 +102,7 @@ export default function SemanaContent() {
           cookedGramsPerMarmita: r.p1Grams,
           numMarmitas: r.p1Marmitas,
           person: 1,
+          recipe_id: r.recipeId ?? null,
         });
       }
       if (isShared && r.p2On && r.p2Grams > 0) {
@@ -108,6 +111,7 @@ export default function SemanaContent() {
           cookedGramsPerMarmita: r.p2Grams,
           numMarmitas: r.p2Marmitas,
           person: 2,
+          recipe_id: r.recipeId ?? null,
         });
       }
     });
@@ -202,9 +206,11 @@ export default function SemanaContent() {
           const pessoa = item.person === 2 ? 2 : 1;
           const grams = item.cooked_grams_per_marmita;
           const marms = item.num_marmitas;
+          const recipeId = item.recipe_id ?? null;
           const existente = porAlimento.find(
             (r) =>
               r.foodId === item.food_id &&
+              (r.recipeId ?? null) === recipeId &&
               (pessoa === 1 ? !r.p1On : !r.p2On)
           );
           const alvo = existente ?? {
@@ -215,6 +221,7 @@ export default function SemanaContent() {
             p2On: false,
             p2Grams: 100,
             p2Marmitas: weekData.week.num_marmitas_p2 || 7,
+            recipeId,
           };
           if (pessoa === 1) {
             alvo.p1On = true;
@@ -307,6 +314,7 @@ export default function SemanaContent() {
       p2On: isShared,
       p2Grams: it.grams,
       p2Marmitas: numMarmitasP2,
+      recipeId: receita.id,
     }));
     setRows((prev) => [...prev, ...novasLinhas]);
     setReceitaIdsNaSemana((prev) =>
@@ -316,6 +324,19 @@ export default function SemanaContent() {
   }
 
   function removerReceitaDoGuia(recipeId: string) {
+    setReceitaIdsNaSemana((prev) => prev.filter((r) => r !== recipeId));
+  }
+
+  // Aplica os mesmos updates a todas as linhas de um prato (grupo de receita).
+  function atualizarGrupoReceita(recipeId: string, updates: Partial<FoodRow>) {
+    setRows((prev) =>
+      prev.map((r) => (r.recipeId === recipeId ? { ...r, ...updates } : r))
+    );
+  }
+
+  // Remove o prato inteiro: as linhas do grupo + o id do guia de preparo.
+  function removerReceita(recipeId: string) {
+    setRows((prev) => prev.filter((r) => r.recipeId !== recipeId));
     setReceitaIdsNaSemana((prev) => prev.filter((r) => r !== recipeId));
   }
 
@@ -350,6 +371,35 @@ export default function SemanaContent() {
   const receitasDaSemana = receitaIdsNaSemana
     .map((rid) => receitasDisponiveis.find((r) => r.id === rid))
     .filter((r): r is RecipeWithIngredients => !!r);
+
+  // Particiona as linhas em blocos preservando a ordem: um bloco por receita
+  // (cartão de prato) e blocos avulsos para alimentos soltos.
+  type Bloco =
+    | { tipo: "receita"; recipeId: string; itens: ItemGrupo[] }
+    | { tipo: "avulso"; idx: number };
+  const blocos: Bloco[] = [];
+  const grupoPorReceita: Record<string, ItemGrupo[]> = {};
+  rows.forEach((r, idx) => {
+    const item: ItemGrupo = {
+      idx,
+      foodId: r.foodId,
+      p1On: r.p1On,
+      p1Grams: r.p1Grams,
+      p1Marmitas: r.p1Marmitas,
+      p2On: r.p2On,
+      p2Grams: r.p2Grams,
+      p2Marmitas: r.p2Marmitas,
+    };
+    if (r.recipeId) {
+      if (!grupoPorReceita[r.recipeId]) {
+        grupoPorReceita[r.recipeId] = [];
+        blocos.push({ tipo: "receita", recipeId: r.recipeId, itens: grupoPorReceita[r.recipeId] });
+      }
+      grupoPorReceita[r.recipeId].push(item);
+    } else {
+      blocos.push({ tipo: "avulso", idx });
+    }
+  });
 
   // Pessoas para a "montagem das marmitas": conjunta = duas pessoas (cada uma
   // com seus itens/marmitas); normal = só quem monta. Reusa os resumos já
@@ -615,7 +665,34 @@ export default function SemanaContent() {
                 </p>
               ) : (
                 <div className="flex flex-col gap-2.5">
-                  {rows.map((linha, idx) => {
+                  {blocos.map((bloco) => {
+                    if (bloco.tipo === "receita") {
+                      return (
+                        <ReceitaNaSemana
+                          key={"r-" + bloco.recipeId}
+                          recipeId={bloco.recipeId}
+                          receita={receitasDisponiveis.find(
+                            (r) => r.id === bloco.recipeId
+                          )}
+                          alimentos={alimentos}
+                          itens={bloco.itens}
+                          isShared={isShared}
+                          meuNome={meuNome}
+                          person2Name={person2Name}
+                          inp={inp}
+                          onAtualizarLinha={(i, updates) =>
+                            atualizarLinha(i, updates)
+                          }
+                          onAtualizarGrupo={(updates) =>
+                            atualizarGrupoReceita(bloco.recipeId, updates)
+                          }
+                          onRemoverLinha={(i) => removerLinha(i)}
+                          onRemover={() => removerReceita(bloco.recipeId)}
+                        />
+                      );
+                    }
+                    const idx = bloco.idx;
+                    const linha = rows[idx];
                     const food = alimentos.find((f) => f.id === linha.foodId);
                     const resP1 =
                       food && linha.p1On && linha.p1Grams > 0
