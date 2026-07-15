@@ -65,6 +65,8 @@ export interface RecipeIngredient {
   // opções de um mesmo slot (ex.: "Carne"). NULL = ingrediente fixo.
   choice_group: number | null;
   choice_label: string | null;
+  // Slot principal: "puxa" a proporção ao escalar o prato na semana.
+  is_principal: boolean;
   created_at: string;
 }
 

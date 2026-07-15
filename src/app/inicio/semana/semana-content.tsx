@@ -340,6 +340,32 @@ export default function SemanaContent() {
     setReceitaIdsNaSemana((prev) => prev.filter((r) => r !== recipeId));
   }
 
+  // Escala o prato pelo ingrediente principal: define o novo g/marmita do
+  // principal e ajusta os secundários pelo mesmo fator (mantém a proporção).
+  function escalarPrincipal(
+    recipeId: string,
+    principalFoodId: string,
+    novoGramas: number
+  ) {
+    const g = novoGramas || 0;
+    if (g <= 0) return; // ignora valor vazio/zero (não zera o prato)
+    setRows((prev) => {
+      const principalAtual = prev.find(
+        (r) => r.recipeId === recipeId && r.foodId === principalFoodId
+      );
+      const base = principalAtual?.p1Grams ?? 0;
+      if (base <= 0) return prev;
+      const fator = g / base;
+      return prev.map((r) => {
+        if (r.recipeId !== recipeId) return r;
+        if (r.foodId === principalFoodId) {
+          return { ...r, p1Grams: g, p2Grams: g };
+        }
+        return { ...r, p1Grams: r.p1Grams * fator, p2Grams: r.p2Grams * fator };
+      });
+    });
+  }
+
   function removerLinha(index: number) {
     setRows(rows.filter((_, i) => i !== index));
   }
@@ -685,6 +711,13 @@ export default function SemanaContent() {
                           }
                           onAtualizarGrupo={(updates) =>
                             atualizarGrupoReceita(bloco.recipeId, updates)
+                          }
+                          onEscalarPrincipal={(principalFoodId, novoGramas) =>
+                            escalarPrincipal(
+                              bloco.recipeId,
+                              principalFoodId,
+                              novoGramas
+                            )
                           }
                           onRemoverLinha={(i) => removerLinha(i)}
                           onRemover={() => removerReceita(bloco.recipeId)}

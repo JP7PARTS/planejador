@@ -62,6 +62,26 @@ export default function ReceitaForm({
         }))
       : []
   );
+
+  // Ingrediente principal (puxa a proporção na semana). Default = o marcado na
+  // receita; nenhum ao criar. Índices referem-se a `linhas`/`escolhas`.
+  const principalInicial: { tipo: "fixo" | "escolha"; idx: number } | null =
+    (() => {
+      if (!agrupado) return null;
+      const fi = agrupado.fixos.findIndex((f) => f.is_principal);
+      if (fi !== -1) return { tipo: "fixo", idx: fi };
+      const ci = agrupado.escolhas.findIndex((c) => c.is_principal);
+      if (ci !== -1) return { tipo: "escolha", idx: ci };
+      return null;
+    })();
+  const [principal, setPrincipal] = useState(principalInicial);
+
+  const ehPrincipal = (tipo: "fixo" | "escolha", idx: number) =>
+    principal?.tipo === tipo && principal.idx === idx;
+  const marcarPrincipal = (tipo: "fixo" | "escolha", idx: number) =>
+    setPrincipal((p) =>
+      p && p.tipo === tipo && p.idx === idx ? null : { tipo, idx }
+    );
   const [stepsText, setStepsText] = useState((recipe?.steps ?? []).join("\n"));
   const [totalTime, setTotalTime] = useState(
     recipe?.total_time_min != null ? String(recipe.total_time_min) : ""
@@ -112,6 +132,11 @@ export default function ReceitaForm({
   }
   function removerLinha(idx: number) {
     setLinhas((prev) => prev.filter((_, i) => i !== idx));
+    setPrincipal((p) => {
+      if (!p || p.tipo !== "fixo") return p;
+      if (p.idx === idx) return null;
+      return p.idx > idx ? { ...p, idx: p.idx - 1 } : p;
+    });
   }
 
   // ---- Escolhas ----
@@ -123,6 +148,11 @@ export default function ReceitaForm({
   }
   function removerEscolha(idx: number) {
     setEscolhas((prev) => prev.filter((_, i) => i !== idx));
+    setPrincipal((p) => {
+      if (!p || p.tipo !== "escolha") return p;
+      if (p.idx === idx) return null;
+      return p.idx > idx ? { ...p, idx: p.idx - 1 } : p;
+    });
   }
   function adicionarOpcao(idx: number, foodId: string) {
     if (!foodId) return;
@@ -147,18 +177,24 @@ export default function ReceitaForm({
     setErro(null);
 
     const ingredients = linhas
-      .filter((l) => l.foodId && Number(l.gramsStr) > 0)
-      .map((l) => ({
+      .map((l, idx) => ({ l, idx }))
+      .filter(({ l }) => l.foodId && Number(l.gramsStr) > 0)
+      .map(({ l, idx }) => ({
         food_id: l.foodId,
         cooked_grams_per_marmita: Number(l.gramsStr),
+        is_principal: ehPrincipal("fixo", idx),
       }));
 
     const choices = escolhas
-      .filter((c) => c.label.trim() && c.foodIds.length > 0 && Number(c.gramsStr) > 0)
-      .map((c) => ({
+      .map((c, idx) => ({ c, idx }))
+      .filter(
+        ({ c }) => c.label.trim() && c.foodIds.length > 0 && Number(c.gramsStr) > 0
+      )
+      .map(({ c, idx }) => ({
         label: c.label.trim(),
         cooked_grams_per_marmita: Number(c.gramsStr),
         food_ids: c.foodIds,
+        is_principal: ehPrincipal("escolha", idx),
       }));
 
     if (!title.trim()) {
@@ -272,6 +308,24 @@ export default function ReceitaForm({
                 />
                 <button
                   type="button"
+                  onClick={() => marcarPrincipal("fixo", idx)}
+                  title={
+                    ehPrincipal("fixo", idx)
+                      ? "Ingrediente principal"
+                      : "Marcar como principal"
+                  }
+                  aria-label="Marcar como principal"
+                  className={
+                    "shrink-0 rounded-[9px] border px-2 py-2 text-[13px] transition " +
+                    (ehPrincipal("fixo", idx)
+                      ? "border-amber-400 bg-amber-100 dark:border-amber-500 dark:bg-amber-900/30"
+                      : "border-[#E2D7C4] bg-white text-slate-300 hover:text-amber-400 dark:border-slate-700 dark:bg-slate-900")
+                  }
+                >
+                  {ehPrincipal("fixo", idx) ? "⭐" : "☆"}
+                </button>
+                <button
+                  type="button"
                   onClick={() => removerLinha(idx)}
                   className={removerBtn}
                   aria-label="Remover ingrediente"
@@ -281,6 +335,10 @@ export default function ReceitaForm({
               </div>
             ))}
           </div>
+          <p className="-mt-2.5 mb-4 text-[11.5px] text-slate-400">
+            ⭐ marca o ingrediente <strong>principal</strong> — é ele que puxa a
+            proporção ao escalar o prato na semana.
+          </p>
 
           {/* Escolhas (ingredientes que variam) */}
           <div className="mb-1.5 flex items-center justify-between">
@@ -328,6 +386,24 @@ export default function ReceitaForm({
                     className={gramsInput}
                     aria-label="Gramas prontos por marmita"
                   />
+                  <button
+                    type="button"
+                    onClick={() => marcarPrincipal("escolha", idx)}
+                    title={
+                      ehPrincipal("escolha", idx)
+                        ? "Escolha principal"
+                        : "Marcar como principal"
+                    }
+                    aria-label="Marcar como principal"
+                    className={
+                      "shrink-0 rounded-[9px] border px-2 py-2 text-[13px] transition " +
+                      (ehPrincipal("escolha", idx)
+                        ? "border-amber-400 bg-amber-100 dark:border-amber-500 dark:bg-amber-900/30"
+                        : "border-[#E2D7C4] bg-white text-slate-300 hover:text-amber-400 dark:border-slate-700 dark:bg-slate-900")
+                    }
+                  >
+                    {ehPrincipal("escolha", idx) ? "⭐" : "☆"}
+                  </button>
                   <button
                     type="button"
                     onClick={() => removerEscolha(idx)}
