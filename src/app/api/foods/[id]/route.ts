@@ -17,7 +17,7 @@ export async function PUT(
     }
 
     const body = await req.json();
-    const { name, category, kcal_per_100g, protein_g_per_100g, carb_g_per_100g, fat_g_per_100g, fc } = body;
+    const { name, shopping_name, category, kcal_per_100g, protein_g_per_100g, carb_g_per_100g, fat_g_per_100g, fc } = body;
 
     if (!name || !category) {
       return NextResponse.json(
@@ -30,6 +30,7 @@ export async function PUT(
       .from("foods")
       .update({
         name,
+        shopping_name: shopping_name?.trim() || null,
         category,
         kcal_per_100g: kcal_per_100g ?? 0,
         protein_g_per_100g: protein_g_per_100g ?? 0,

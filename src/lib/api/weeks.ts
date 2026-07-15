@@ -39,6 +39,7 @@ export async function getWeek(
 export interface WeekFullItem {
   food_id: string;
   food_name: string;
+  shopping_name: string | null;
   category: string;
   kcal_per_100g: number;
   protein_g_per_100g: number;

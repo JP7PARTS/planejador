@@ -15,6 +15,7 @@ export default function FoodForm({ food, onClose, onSuccess }: Props) {
   const [erro, setErro] = useState<string | null>(null);
 
   const [name, setName] = useState(food?.name ?? "");
+  const [shoppingName, setShoppingName] = useState(food?.shopping_name ?? "");
   const [category, setCategory] = useState<Food["category"]>(food?.category ?? "carbo");
   const [kcal, setKcal] = useState(String(food?.kcal_per_100g ?? ""));
   const [protein, setProtein] = useState(String(food?.protein_g_per_100g ?? ""));
@@ -30,6 +31,7 @@ export default function FoodForm({ food, onClose, onSuccess }: Props) {
     try {
       const payload = {
         name: name.trim(),
+        shopping_name: shoppingName.trim() || null,
         category,
         kcal_per_100g: Number(kcal),
         protein_g_per_100g: Number(protein),
@@ -82,6 +84,23 @@ export default function FoodForm({ food, onClose, onSuccess }: Props) {
             className={`${bigInput} mb-3.5`}
             placeholder="Ex.: Frango grelhado"
           />
+
+          <label className="mb-1.5 block text-[13px] font-semibold">
+            Nome de compra{" "}
+            <span className="font-normal text-slate-400">(opcional)</span>
+          </label>
+          <input
+            type="text"
+            value={shoppingName}
+            onChange={(e) => setShoppingName(e.target.value)}
+            className={`${bigInput} mb-1`}
+            placeholder="Ex.: Acém"
+          />
+          <p className="mb-3.5 text-[12px] leading-snug text-slate-500 dark:text-slate-400">
+            Nome do alimento cru na lista de compras. Deixe vazio para usar o
+            nome acima. Use o mesmo em variações (ex.: "Acém" para "Acém cozido"
+            e "Acém grelhado") para juntar numa linha só.
+          </p>
 
           <label className="mb-1.5 block text-[13px] font-semibold">
             Categoria

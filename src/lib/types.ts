@@ -4,6 +4,9 @@ export interface Food {
   id: string;
   user_id: string;
   name: string;
+  // Nome de compra (alimento cru) usado só na lista de compras. Null = usa `name`.
+  // Alimentos com o mesmo shopping_name juntam numa linha só na lista de compras.
+  shopping_name: string | null;
   category: "carbo" | "proteina" | "vegetal" | "fruta" | "gordura" | "molho" | "outro";
   kcal_per_100g: number;
   protein_g_per_100g: number;

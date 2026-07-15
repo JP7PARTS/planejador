@@ -76,6 +76,7 @@ export default function VerSemanaPage() {
     foodsMap[it.food_id] = {
       id: it.food_id,
       name: it.food_name,
+      shopping_name: it.shopping_name,
       category: it.category as Categoria,
       fc: it.fc,
       kcal_per_100g: it.kcal_per_100g,
@@ -158,6 +159,7 @@ export default function VerSemanaPage() {
       for (const it of faltantes) {
         await createFood({
           name: it.food_name,
+          shopping_name: it.shopping_name,
           category: it.category as Categoria,
           kcal_per_100g: it.kcal_per_100g,
           protein_g_per_100g: it.protein_g_per_100g,

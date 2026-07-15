@@ -42,17 +42,24 @@ export interface ShoppingListItem {
   category: Food["category"];
 }
 
+// Nome exibido na lista de compras: o "nome de compra" (alimento cru) se
+// definido, senão o nome normal. Alimentos com o mesmo nome de compra juntam.
+export function nomeCompra(food: Food): string {
+  return food.shopping_name?.trim() || food.name;
+}
+
 // Monta a lista de compras a partir do resumo, agregando o cru total por
-// alimento (mesmo nome soma) e preservando a categoria para agrupar na tela.
+// nome de compra (mesmo nome de compra soma) e preservando a categoria.
 export function buildShoppingList(summary: WeekSummary): ShoppingListItem[] {
   const map = new Map<string, ShoppingListItem>();
   summary.items.forEach((r) => {
-    const existing = map.get(r.food.name);
+    const nome = nomeCompra(r.food);
+    const existing = map.get(nome);
     if (existing) {
       existing.grams += r.rawTotal;
     } else {
-      map.set(r.food.name, {
-        name: r.food.name,
+      map.set(nome, {
+        name: nome,
         grams: r.rawTotal,
         category: r.food.category,
       });
