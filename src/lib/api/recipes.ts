@@ -117,3 +117,55 @@ export async function deleteRecipe(id: string) {
     throw new Error(err.error || "Erro ao deletar receita");
   }
 }
+
+// ---- Compartilhamento por link ----
+
+// Prévia de uma receita compartilhada (alimentos desnormalizados).
+export interface SharedRecipePreview {
+  title: string;
+  steps: string[];
+  total_time_min: number | null;
+  pressure_time_min: number | null;
+  yield_marmitas: number | null;
+  prep_notes: string | null;
+  owner_name: string;
+  ingredients: Array<{
+    cooked_grams_per_marmita: number;
+    choice_group: number | null;
+    choice_label: string | null;
+    is_principal: boolean;
+    food: {
+      name: string;
+      category: string;
+      fc: number;
+      kcal_per_100g: number;
+      protein_g_per_100g: number;
+      carb_g_per_100g: number;
+      fat_g_per_100g: number;
+    };
+  }>;
+}
+
+export async function getSharedRecipe(code: string): Promise<SharedRecipePreview> {
+  const res = await fetch(`/api/recipes/shared/${code}`);
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error || "Erro ao carregar receita compartilhada");
+  }
+  return res.json();
+}
+
+export async function importSharedRecipe(
+  code: string
+): Promise<{ id: string; title: string }> {
+  const res = await fetch("/api/recipes/import", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ code }),
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error || "Erro ao importar receita");
+  }
+  return res.json();
+}

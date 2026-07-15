@@ -21,6 +21,30 @@ export default function ReceitasList({ recipes, alimentos, onRefresh }: Props) {
   const [isCreating, setIsCreating] = useState(false);
   const [deletandoId, setDeletandoId] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
+
+  // Gera o link da receita e compartilha (menu nativo no celular; senão copia).
+  async function compartilhar(r: RecipeWithIngredients) {
+    const url = `${window.location.origin}/inicio/receitas/importar/${r.id}`;
+    const texto = `Receita "${r.title}" — abra pra adicionar à sua conta:\n${url}`;
+    setAviso(null);
+    try {
+      if (typeof navigator !== "undefined" && navigator.share) {
+        await navigator.share({ title: r.title, text: texto, url });
+        return;
+      }
+    } catch {
+      return; // usuário cancelou o compartilhamento nativo
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setAviso("Link copiado! Mande para quem quiser.");
+      setTimeout(() => setAviso(null), 3000);
+    } catch {
+      setAviso("Não foi possível copiar o link nesta tela.");
+      setTimeout(() => setAviso(null), 3000);
+    }
+  }
 
   const foodsMap = useMemo(() => {
     const m: Record<string, Food> = {};
@@ -92,6 +116,11 @@ export default function ReceitasList({ recipes, alimentos, onRefresh }: Props) {
           {erro}
         </div>
       )}
+      {aviso && (
+        <div className="rounded-xl bg-emerald-500/10 p-3.5 text-sm text-emerald-700 dark:text-emerald-300">
+          {aviso}
+        </div>
+      )}
 
       {recipes.length === 0 ? (
         <div className="rounded-[20px] border border-dashed border-[#E7DECD] bg-white/60 p-10 text-center dark:border-slate-700 dark:bg-slate-900/40">
@@ -153,6 +182,13 @@ export default function ReceitasList({ recipes, alimentos, onRefresh }: Props) {
                     className="flex-1 rounded-[9px] border border-[#E7DECD] bg-[#FCFAF5] py-2 text-[13px] font-semibold transition hover:brightness-95 dark:border-slate-700 dark:bg-slate-800"
                   >
                     ✏️ Editar
+                  </button>
+                  <button
+                    onClick={() => compartilhar(r)}
+                    className="rounded-[9px] border border-[#E7DECD] bg-[#FCFAF5] px-3 py-2 text-[13px] transition hover:brightness-95 dark:border-slate-700 dark:bg-slate-800"
+                    title="Compartilhar receita"
+                  >
+                    🔗
                   </button>
                   <button
                     onClick={() => handleDelete(r.id)}
