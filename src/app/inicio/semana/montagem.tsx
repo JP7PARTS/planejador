@@ -12,9 +12,91 @@ export interface PessoaMontagem {
   itens: WeekItemResult[];
 }
 
+// Um grupo de itens por receita (preserva a ordem; recipeId null = avulso).
+interface GrupoItens {
+  recipeId: string | null;
+  titulo: string | null;
+  itens: WeekItemResult[];
+}
+
+// Agrupa os itens de uma pessoa por receita, na ordem de 1ª aparição.
+function agruparPorReceita(
+  itens: WeekItemResult[],
+  tituloPorReceita: Map<string, string>
+): GrupoItens[] {
+  const grupos: GrupoItens[] = [];
+  const idx = new Map<string, GrupoItens>();
+  itens.forEach((item) => {
+    const rid = item.recipe_id ?? null;
+    const chave = rid ?? "__avulso__";
+    let g = idx.get(chave);
+    if (!g) {
+      g = {
+        recipeId: rid,
+        titulo: rid ? tituloPorReceita.get(rid) ?? "Receita" : null,
+        itens: [],
+      };
+      idx.set(chave, g);
+      grupos.push(g);
+    }
+    g.itens.push(item);
+  });
+  return grupos;
+}
+
+// Total cozido unificado, agrupado por receita e somado por alimento entre
+// todas as pessoas (é o que se cozinha junto na panela).
+interface TotalItem {
+  name: string;
+  grams: number;
+}
+interface GrupoTotal {
+  recipeId: string | null;
+  titulo: string | null;
+  itens: TotalItem[];
+}
+
+function totalCozidoAgrupado(
+  pessoas: PessoaMontagem[],
+  tituloPorReceita: Map<string, string>
+): GrupoTotal[] {
+  const grupos: GrupoTotal[] = [];
+  const idx = new Map<
+    string,
+    { grupo: GrupoTotal; porFood: Map<string, TotalItem> }
+  >();
+  pessoas.forEach((pessoa) => {
+    pessoa.itens.forEach((item) => {
+      const rid = item.recipe_id ?? null;
+      const chave = rid ?? "__avulso__";
+      let entry = idx.get(chave);
+      if (!entry) {
+        const grupo: GrupoTotal = {
+          recipeId: rid,
+          titulo: rid ? tituloPorReceita.get(rid) ?? "Receita" : null,
+          itens: [],
+        };
+        entry = { grupo, porFood: new Map() };
+        idx.set(chave, entry);
+        grupos.push(grupo);
+      }
+      const grams = item.cookedGramsPerMarmita * item.numMarmitas;
+      const ex = entry.porFood.get(item.food.id);
+      if (ex) {
+        ex.grams += grams;
+      } else {
+        const ti: TotalItem = { name: item.food.name, grams };
+        entry.porFood.set(item.food.id, ti);
+        entry.grupo.itens.push(ti);
+      }
+    });
+  });
+  return grupos;
+}
+
 // Overlay em tela cheia para a "montagem das marmitas": mostra, por pessoa,
-// quanto de cada alimento (COZIDO) vai em cada marmita. Só exibição — os dados
-// vêm dos resumos já calculados (WeekItemResult). Sem cálculo novo.
+// quanto de cada alimento (COZIDO) vai em cada marmita, agrupado por receita.
+// Só exibição — os dados vêm dos resumos já calculados (WeekItemResult).
 export default function MontagemMarmitas({
   pessoas,
   receitas = [],
@@ -26,18 +108,15 @@ export default function MontagemMarmitas({
 }) {
   const comItens = pessoas.filter((p) => p.itens.length > 0);
 
-  // Total cozido a fazer, unificado: soma o total de todas as pessoas por
-  // alimento (é o que se cozinha junto na panela), preservando a ordem.
-  const totalCozido = new Map<string, { name: string; grams: number }>();
-  comItens.forEach((pessoa) => {
-    pessoa.itens.forEach((item) => {
-      const grams = item.cookedGramsPerMarmita * item.numMarmitas;
-      const ex = totalCozido.get(item.food.id);
-      if (ex) ex.grams += grams;
-      else totalCozido.set(item.food.id, { name: item.food.name, grams });
-    });
-  });
-  const totalCozidoArr = Array.from(totalCozido.values());
+  const tituloPorReceita = new Map(receitas.map((r) => [r.id, r.title]));
+  const totalGrupos = totalCozidoAgrupado(comItens, tituloPorReceita);
+
+  // Cabeçalho de receita reutilizado nas duas seções.
+  const cabecalhoReceita = (titulo: string) => (
+    <div className="bg-[#F4EFE4] px-[18px] py-2 text-[11.5px] font-bold uppercase tracking-[0.05em] text-emerald-800 dark:bg-slate-800 dark:text-emerald-300">
+      🍲 {titulo}
+    </div>
+  );
 
   return (
     <div className="fixed inset-0 z-[60] flex flex-col bg-[#F7F2E9] dark:bg-slate-950">
@@ -67,71 +146,91 @@ export default function MontagemMarmitas({
               (comItens.length > 1 ? " md:grid-cols-2" : " max-w-[560px]")
             }
           >
-            {comItens.map((pessoa, i) => (
-              <div key={i}>
-                <p className="mb-4 text-[15px] text-slate-600 dark:text-slate-400">
-                  Quanto de cada alimento (já{" "}
-                  <strong className="text-slate-900 dark:text-slate-200">
-                    cozido
-                  </strong>
-                  ) vai em cada uma das{" "}
-                  <strong className="text-slate-900 dark:text-slate-200">
-                    {pessoa.numMarmitas}
-                  </strong>{" "}
-                  marmitas de {pessoa.nome}.
-                </p>
+            {comItens.map((pessoa, i) => {
+              const grupos = agruparPorReceita(pessoa.itens, tituloPorReceita);
+              return (
+                <div key={i}>
+                  <p className="mb-4 text-[15px] text-slate-600 dark:text-slate-400">
+                    Quanto de cada alimento (já{" "}
+                    <strong className="text-slate-900 dark:text-slate-200">
+                      cozido
+                    </strong>
+                    ) vai em cada uma das{" "}
+                    <strong className="text-slate-900 dark:text-slate-200">
+                      {pessoa.numMarmitas}
+                    </strong>{" "}
+                    marmitas de {pessoa.nome}.
+                  </p>
 
-                <div className="overflow-hidden rounded-[20px] border border-[#EADFCD] bg-white dark:border-slate-800 dark:bg-slate-900">
-                  <div className="bg-emerald-700 px-[18px] py-3.5 text-base font-bold text-white [font-family:var(--font-display)]">
-                    👤 Cada marmita leva
-                  </div>
-                  {pessoa.itens.map((item, j) => {
-                    const parcial =
-                      item.numMarmitas > 0 &&
-                      item.numMarmitas < pessoa.numMarmitas;
-                    return (
-                      <div
-                        key={j}
-                        className="flex items-baseline justify-between gap-3 border-b border-[#F0E9DA] px-[18px] py-3.5 dark:border-slate-800"
-                      >
-                        <span className="text-base font-medium">
-                          {item.food.name}
-                          {parcial && (
-                            <span className="ml-1 text-xs text-amber-600 dark:text-amber-400">
-                              (em {item.numMarmitas} das {pessoa.numMarmitas})
-                            </span>
-                          )}
-                        </span>
-                        <span className="shrink-0 text-lg font-bold text-emerald-700 [font-family:var(--font-display)] dark:text-emerald-400">
-                          {item.cookedGramsPerMarmita.toFixed(0)} g
-                        </span>
+                  <div className="overflow-hidden rounded-[20px] border border-[#EADFCD] bg-white dark:border-slate-800 dark:bg-slate-900">
+                    <div className="bg-emerald-700 px-[18px] py-3.5 text-base font-bold text-white [font-family:var(--font-display)]">
+                      👤 Cada marmita leva
+                    </div>
+                    {grupos.map((grupo, gi) => (
+                      <div key={gi}>
+                        {grupo.titulo && cabecalhoReceita(grupo.titulo)}
+                        {grupo.itens.map((item, j) => {
+                          const parcial =
+                            item.numMarmitas > 0 &&
+                            item.numMarmitas < pessoa.numMarmitas;
+                          return (
+                            <div
+                              key={j}
+                              className="flex items-baseline justify-between gap-3 border-b border-[#F0E9DA] px-[18px] py-3.5 dark:border-slate-800"
+                            >
+                              <span className="text-base font-medium">
+                                {item.food.name}
+                                {parcial && (
+                                  <span className="ml-1 text-xs text-amber-600 dark:text-amber-400">
+                                    (em {item.numMarmitas} das{" "}
+                                    {pessoa.numMarmitas})
+                                  </span>
+                                )}
+                              </span>
+                              <span className="shrink-0 text-lg font-bold text-emerald-700 [font-family:var(--font-display)] dark:text-emerald-400">
+                                {item.cookedGramsPerMarmita.toFixed(0)} g
+                              </span>
+                            </div>
+                          );
+                        })}
                       </div>
-                    );
-                  })}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
-        {/* Total cozido a fazer — unificado (o que se cozinha junto na panela) */}
-        {totalCozidoArr.length > 0 && (
+        {/* Total cozido a fazer — unificado e agrupado por receita */}
+        {totalGrupos.length > 0 && (
           <div className="mx-auto mt-6 w-full max-w-[560px]">
             <p className="mb-2 text-xs font-bold uppercase tracking-[0.05em] text-slate-500 dark:text-slate-400">
               Total cozido a fazer
             </p>
-            <div className="rounded-2xl bg-[#EFE7D8] px-[18px] py-2 dark:bg-slate-800">
-              {totalCozidoArr.map((item, j) => (
-                <div
-                  key={j}
-                  className="flex items-baseline justify-between gap-3 border-b border-[#E2D8C6] py-2 last:border-b-0 dark:border-slate-700"
-                >
-                  <span className="text-[14.5px] text-slate-600 dark:text-slate-400">
-                    {item.name}
-                  </span>
-                  <span className="text-[14.5px] font-bold text-slate-900 dark:text-slate-100">
-                    {item.grams.toFixed(0)} g
-                  </span>
+            <div className="overflow-hidden rounded-2xl bg-[#EFE7D8] dark:bg-slate-800">
+              {totalGrupos.map((grupo, gi) => (
+                <div key={gi}>
+                  {grupo.titulo && (
+                    <div className="bg-[#E7DCC7] px-[18px] py-1.5 text-[11px] font-bold uppercase tracking-[0.05em] text-slate-600 dark:bg-slate-700 dark:text-slate-300">
+                      🍲 {grupo.titulo}
+                    </div>
+                  )}
+                  <div className="px-[18px]">
+                    {grupo.itens.map((item, j) => (
+                      <div
+                        key={j}
+                        className="flex items-baseline justify-between gap-3 border-b border-[#E2D8C6] py-2 last:border-b-0 dark:border-slate-700"
+                      >
+                        <span className="text-[14.5px] text-slate-600 dark:text-slate-400">
+                          {item.name}
+                        </span>
+                        <span className="text-[14.5px] font-bold text-slate-900 dark:text-slate-100">
+                          {item.grams.toFixed(0)} g
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>

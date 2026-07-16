@@ -151,10 +151,13 @@ export function calculateWeekSummary(
   numMarmitas: number
 ): WeekSummary {
   const results: WeekItemResult[] = items
-    .map((item) => {
+    .map((item): WeekItemResult | null => {
       const food = foodsMap[item.foodId];
       if (!food) return null;
-      return calculateWeekItem(food, item.cookedGramsPerMarmita, item.numMarmitas);
+      return {
+        ...calculateWeekItem(food, item.cookedGramsPerMarmita, item.numMarmitas),
+        recipe_id: item.recipe_id ?? null,
+      };
     })
     .filter((r): r is WeekItemResult => r !== null);
 
