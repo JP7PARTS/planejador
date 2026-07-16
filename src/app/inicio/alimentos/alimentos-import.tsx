@@ -60,6 +60,7 @@ function normalizeKey(k: string): string {
 // internos do alimento. Aceita várias grafias para cada coluna.
 function mapRow(row: Record<string, unknown>): {
   name: string;
+  shopping_name: string;
   category: string;
   kcal: string;
   protein: string;
@@ -84,6 +85,12 @@ function mapRow(row: Record<string, unknown>): {
 
   return {
     name: pick("nome", "name", "alimento"),
+    shopping_name: pick(
+      "nomedecompra",
+      "nomecompra",
+      "shoppingname",
+      "compra"
+    ),
     category: pick("categoria", "category", "cat"),
     kcal: pick("kcalpor100g", "kcalper100g", "kcal", "calorias", "caloria"),
     protein: pick("proteinag", "proteina", "protein", "proteingper100g"),
@@ -199,6 +206,7 @@ export default function AlimentosImport({ onClose, onSuccess }: Props) {
 
         const importFood: ImportFood = {
           name,
+          shopping_name: item.shopping_name || null,
           category: category as ImportFood["category"],
           kcal_per_100g: parseNum(item.kcal, 0),
           protein_g_per_100g: parseNum(item.protein, 0),

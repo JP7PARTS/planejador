@@ -90,6 +90,7 @@ export interface RecipeWithIngredients extends Recipe {
 // Tipos para importação em massa de alimentos
 export interface ImportFood {
   name: string;
+  shopping_name?: string | null; // nome de compra (alimento cru); opcional
   category: "carbo" | "proteina" | "vegetal" | "fruta" | "gordura" | "molho" | "outro";
   kcal_per_100g?: number;
   protein_g_per_100g?: number;
