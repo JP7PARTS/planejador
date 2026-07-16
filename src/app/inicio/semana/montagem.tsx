@@ -26,6 +26,19 @@ export default function MontagemMarmitas({
 }) {
   const comItens = pessoas.filter((p) => p.itens.length > 0);
 
+  // Total cozido a fazer, unificado: soma o total de todas as pessoas por
+  // alimento (é o que se cozinha junto na panela), preservando a ordem.
+  const totalCozido = new Map<string, { name: string; grams: number }>();
+  comItens.forEach((pessoa) => {
+    pessoa.itens.forEach((item) => {
+      const grams = item.cookedGramsPerMarmita * item.numMarmitas;
+      const ex = totalCozido.get(item.food.id);
+      if (ex) ex.grams += grams;
+      else totalCozido.set(item.food.id, { name: item.food.name, grams });
+    });
+  });
+  const totalCozidoArr = Array.from(totalCozido.values());
+
   return (
     <div className="fixed inset-0 z-[60] flex flex-col bg-[#F7F2E9] dark:bg-slate-950">
       {/* Barra fixa no topo */}
@@ -96,30 +109,32 @@ export default function MontagemMarmitas({
                     );
                   })}
                 </div>
-
-                <p className="mb-2 mt-[18px] text-xs font-bold uppercase tracking-[0.05em] text-slate-500 dark:text-slate-400">
-                  Total cozido a fazer
-                </p>
-                <div className="rounded-2xl bg-[#EFE7D8] px-[18px] py-2 dark:bg-slate-800">
-                  {pessoa.itens.map((item, j) => (
-                    <div
-                      key={j}
-                      className="flex items-baseline justify-between gap-3 border-b border-[#E2D8C6] py-2 last:border-b-0 dark:border-slate-700"
-                    >
-                      <span className="text-[14.5px] text-slate-600 dark:text-slate-400">
-                        {item.food.name}
-                      </span>
-                      <span className="text-[14.5px] font-bold text-slate-900 dark:text-slate-100">
-                        {(item.cookedGramsPerMarmita * item.numMarmitas).toFixed(
-                          0
-                        )}{" "}
-                        g
-                      </span>
-                    </div>
-                  ))}
-                </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Total cozido a fazer — unificado (o que se cozinha junto na panela) */}
+        {totalCozidoArr.length > 0 && (
+          <div className="mx-auto mt-6 w-full max-w-[560px]">
+            <p className="mb-2 text-xs font-bold uppercase tracking-[0.05em] text-slate-500 dark:text-slate-400">
+              Total cozido a fazer
+            </p>
+            <div className="rounded-2xl bg-[#EFE7D8] px-[18px] py-2 dark:bg-slate-800">
+              {totalCozidoArr.map((item, j) => (
+                <div
+                  key={j}
+                  className="flex items-baseline justify-between gap-3 border-b border-[#E2D8C6] py-2 last:border-b-0 dark:border-slate-700"
+                >
+                  <span className="text-[14.5px] text-slate-600 dark:text-slate-400">
+                    {item.name}
+                  </span>
+                  <span className="text-[14.5px] font-bold text-slate-900 dark:text-slate-100">
+                    {item.grams.toFixed(0)} g
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
