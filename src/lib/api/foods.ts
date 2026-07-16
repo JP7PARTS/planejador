@@ -145,12 +145,35 @@ export async function downloadTemplate(): Promise<void> {
   const blob = new Blob([buffer], {
     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   });
+  baixarArquivo(blob, "alimentos-modelo.xlsx");
+}
+
+// Dispara o download de um Blob (padrão nativo, sem dependências).
+function baixarArquivo(blob: Blob, nome: string): void {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = "alimentos-modelo.xlsx";
+  link.download = nome;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
+}
+
+// Gera o mesmo modelo em CSV (mais leve, abre em qualquer editor). Usa `;` como
+// separador (Excel pt-BR abre em colunas) + BOM UTF-8 (acentos corretos no
+// Excel) + vírgula decimal nos exemplos (amigável pt-BR; o parser aceita ambos).
+export function downloadCsvTemplate(): void {
+  const escapar = (v: string | number): string => {
+    let s = typeof v === "number" ? String(v).replace(".", ",") : v;
+    // Aspas se o texto tiver o separador, aspas ou quebra de linha.
+    if (/[";\n]/.test(s)) s = `"${s.replace(/"/g, '""')}"`;
+    return s;
+  };
+  const linhas = [TEMPLATE_HEADERS, ...TEMPLATE_EXAMPLES].map((linha) =>
+    linha.map(escapar).join(";")
+  );
+  const csv = "﻿" + linhas.join("\r\n") + "\r\n";
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  baixarArquivo(blob, "alimentos-modelo.csv");
 }
