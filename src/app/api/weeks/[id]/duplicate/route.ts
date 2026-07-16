@@ -55,12 +55,27 @@ export async function POST(
       }
     }
 
+    // Garante um título único: se "X - cópia" já existe, tenta "X - cópia 2",
+    // "X - cópia 3"… (o banco tem unique(user_id, title)).
+    const baseTitle = newTitle.trim();
+    let finalTitle = baseTitle;
+    const { data: existentes } = await supabase
+      .from("weeks")
+      .select("title")
+      .eq("user_id", user.id);
+    const titulos = new Set((existentes ?? []).map((w) => w.title));
+    if (titulos.has(finalTitle)) {
+      let n = 2;
+      while (titulos.has(`${baseTitle} ${n}`)) n++;
+      finalTitle = `${baseTitle} ${n}`;
+    }
+
     // Cria nova semana
     const { data: newWeek, error: createError } = await supabase
       .from("weeks")
       .insert({
         user_id: user.id,
-        title: newTitle.trim(),
+        title: finalTitle,
         notes: originalWeek.notes,
         num_marmitas: originalWeek.num_marmitas,
         is_favorite: false,
@@ -101,6 +116,7 @@ export async function POST(
         cooked_grams_per_marmita: item.cooked_grams_per_marmita,
         num_marmitas: item.num_marmitas,
         person: item.person ?? 1,
+        recipe_id: item.recipe_id ?? null,
       }));
 
       const { error: insertError } = await supabase
