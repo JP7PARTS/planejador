@@ -3,6 +3,7 @@
 import {
   bulkImportFoods,
   downloadTemplate,
+  downloadCsvTemplate,
 } from "@/lib/api/foods";
 import { ImportFood, BulkImportError } from "@/lib/types";
 import Papa from "papaparse";
@@ -329,25 +330,38 @@ export default function AlimentosImport({ onClose, onSuccess }: Props) {
               </p>
             )}
 
-            <div className="flex gap-2.5">
-              <button
-                type="button"
-                onClick={() => {
-                  void downloadTemplate();
-                }}
-                className="flex-1 rounded-xl border border-[#E2D7C4] bg-white px-4 py-2.5 font-semibold text-slate-900 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-              >
-                📥 Baixar Template
-              </button>
-              <button
-                type="button"
-                onClick={handlePreview}
-                disabled={!selectedFile || loading}
-                className="flex-1 rounded-xl bg-emerald-600 px-4 py-2.5 font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
-              >
-                {loading ? "Processando..." : "Visualizar"}
-              </button>
+            <div>
+              <p className="mb-1.5 text-[12px] font-semibold text-slate-500 dark:text-slate-400">
+                Baixar modelo em branco:
+              </p>
+              <div className="flex gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    void downloadTemplate();
+                  }}
+                  className="flex-1 rounded-xl border border-[#E2D7C4] bg-white px-4 py-2.5 font-semibold text-slate-900 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                >
+                  📊 Excel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => downloadCsvTemplate()}
+                  className="flex-1 rounded-xl border border-[#E2D7C4] bg-white px-4 py-2.5 font-semibold text-slate-900 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                >
+                  📄 CSV
+                </button>
+              </div>
             </div>
+
+            <button
+              type="button"
+              onClick={handlePreview}
+              disabled={!selectedFile || loading}
+              className="w-full rounded-xl bg-emerald-600 px-4 py-2.5 font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
+            >
+              {loading ? "Processando..." : "Visualizar"}
+            </button>
           </div>
         )}
 
