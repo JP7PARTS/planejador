@@ -87,6 +87,7 @@ export const CATEGORIAS_LABELS: Record<string, string> = {
 // Cabeçalhos do template (amigáveis, em português).
 export const TEMPLATE_HEADERS = [
   "Nome",
+  "Nome de compra",
   "Categoria",
   "kcal (por 100g)",
   "Proteína (g)",
@@ -96,9 +97,10 @@ export const TEMPLATE_HEADERS = [
 ];
 
 const TEMPLATE_EXAMPLES = [
-  ["Frango grelhado", "Proteína", 165, 31, 0, 3.6, 1.0],
-  ["Arroz cozido", "Carboidrato", 130, 2.7, 28, 0.3, 3.0],
-  ["Brócolis cozido", "Vegetal", 34, 2.8, 7, 0.4, 2.0],
+  ["Acém cozido", "Acém", "Proteína", 215, 27, 0, 12, 0.7],
+  ["Acém grelhado", "Acém", "Proteína", 220, 29, 0, 11, 0.72],
+  ["Arroz cozido", "Arroz", "Carboidrato", 130, 2.7, 28, 0.3, 3.0],
+  ["Brócolis cozido", "Brócolis", "Vegetal", 34, 2.8, 7, 0.4, 2.0],
 ];
 
 // Gera um Excel (.xlsx) de verdade — abre com as colunas separadas e traz um
@@ -127,11 +129,11 @@ export async function downloadTemplate(): Promise<void> {
     col.width = i === 0 ? 24 : 16;
   });
 
-  // Dropdown de Categoria (coluna B) da linha 2 até a 1000.
+  // Dropdown de Categoria (coluna C) da linha 2 até a 1000.
   const categoriesDisplay = CATEGORIAS_VALIDAS.map((c) => CATEGORIAS_LABELS[c]);
   const lista = `"${categoriesDisplay.join(",")}"`;
   for (let r = 2; r <= 1000; r++) {
-    sheet.getCell(`B${r}`).dataValidation = {
+    sheet.getCell(`C${r}`).dataValidation = {
       type: "list",
       allowBlank: false,
       formulae: [lista],

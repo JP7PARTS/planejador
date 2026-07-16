@@ -21,6 +21,8 @@ function normalizeNumber(v: unknown, defaultValue: number): number {
 function validateFood(food: unknown, row: number): { valid: boolean; food?: ImportFood; error?: BulkImportError } {
   const item = food as Record<string, unknown>;
   const name = typeof item.name === "string" ? item.name.trim() : "";
+  const shoppingName =
+    typeof item.shopping_name === "string" ? item.shopping_name.trim() : "";
   const category = typeof item.category === "string" ? item.category.trim() : "";
 
   if (!name) {
@@ -49,6 +51,7 @@ function validateFood(food: unknown, row: number): { valid: boolean; food?: Impo
 
   const validatedFood: ImportFood = {
     name,
+    shopping_name: shoppingName || null,
     category: category as ImportFood["category"],
     kcal_per_100g: normalizeNumber(item.kcal_per_100g, 0),
     protein_g_per_100g: normalizeNumber(item.protein_g_per_100g, 0),
@@ -146,6 +149,7 @@ export async function POST(req: NextRequest) {
         const insertRows = toInsert.map((f) => ({
           user_id: user.id,
           name: f.name,
+          shopping_name: f.shopping_name?.trim() || null,
           category: f.category,
           kcal_per_100g: f.kcal_per_100g || 0,
           protein_g_per_100g: f.protein_g_per_100g || 0,
@@ -171,6 +175,7 @@ export async function POST(req: NextRequest) {
           const { error: updateErr } = await supabase
             .from("foods")
             .update({
+              shopping_name: food.shopping_name?.trim() || null,
               category: food.category,
               kcal_per_100g: food.kcal_per_100g || 0,
               protein_g_per_100g: food.protein_g_per_100g || 0,
